@@ -38,7 +38,7 @@ namespace StringResourceVisualizer
             this.view = view;
             this.layer = view.GetAdornmentLayer("StringResourceCommentLayer");
 
-            this.ResourcesToAdorn = new Dictionary<int, TextBlock>();
+            this.LinesToAdorn = new List<int>();
 
             this.view.LayoutChanged += this.LayoutChangedHandler;
         }
@@ -49,8 +49,7 @@ namespace StringResourceVisualizer
 
         public static Color TextForegroundColor { get; set; }
 
-        // Dictionary to map line number to UI displaying text
-        public Dictionary<int, TextBlock> ResourcesToAdorn { get; set; }
+        public List<int> LinesToAdorn { get; set; }
 
         public List<(string path, XmlDocument xDoc)> XmlDocs
         {
@@ -96,7 +95,7 @@ namespace StringResourceVisualizer
         {
             if (ResourceFiles.Any())
             {
-                this.ResourcesToAdorn.Clear();
+                this.LinesToAdorn.Clear();
 
                 // Determine text to search for (based on file names)
                 var searchTexts = new string[ResourceFiles.Count];
@@ -134,11 +133,12 @@ namespace StringResourceVisualizer
             {
                 string lineText = line.Extent.GetText();
 
+                // TODO: need to handle multiple search texts being found on a line. Issue #4
                 int matchIndex = lineText.IndexOfAny(searchTexts);
 
                 if (matchIndex >= 0)
                 {
-                    if (!this.ResourcesToAdorn.ContainsKey(lineNumber))
+                    if (!this.LinesToAdorn.Contains(lineNumber))
                     {
                         // Get coordinates of text
                         int start = line.Extent.Start.Position + matchIndex;
@@ -198,21 +198,14 @@ namespace StringResourceVisualizer
                                 Height = (TextSize * TextBlockSizeToFontScaleFactor)
                             };
 
-                            // TODO: review need for this (might be an async issue)
-                            if (!this.ResourcesToAdorn.ContainsKey(lineNumber))
-                            {
-                                this.ResourcesToAdorn.Add(lineNumber, tb);
-                            }
+                            this.LinesToAdorn.Add(lineNumber);
 
                             var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);
 
                             Canvas.SetLeft(tb, lineGeometry.Bounds.Left);
                             Canvas.SetTop(tb, line.TextTop - tb.Height);
 
-                            // Check need this
-                            this.layer.RemoveAdornment(tb);
-                            this.layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, tag: null,
-                                adornment: tb, removedCallback: null);
+                            this.layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, tag: null, adornment: tb, removedCallback: null);
                         }
                     }
                 }
