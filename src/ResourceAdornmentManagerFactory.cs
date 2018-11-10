@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.Utilities;
 
 namespace StringResourceVisualizer
 {
-    //// TODO: support VB.Net too
+    //// TODO: support VB.Net too.  Issue #1
 
     /// <summary>
     /// Establishes an <see cref="IAdornmentLayer"/> to place the adornment on and exports the <see cref="IWpfTextViewCreationListener"/>

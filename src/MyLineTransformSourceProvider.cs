@@ -9,7 +9,7 @@ using Microsoft.VisualStudio.Utilities;
 
 namespace StringResourceVisualizer
 {
-    //// TODO: support VB.Net too
+    //// TODO: support VB.Net too. Issue #1
 
     [Export(typeof(ILineTransformSourceProvider))]
     [ContentType("CSharp")]

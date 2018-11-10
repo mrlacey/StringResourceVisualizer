@@ -97,7 +97,7 @@ namespace StringResourceVisualizer
                     }
             }
 
-            // TODO: handle res files being removed or added to a project - currently will be ignored
+            // TODO: handle res files being removed or added to a project - currently will be ignored. Issue #2
             // Get all resource files from the solution
             // Do this now, rather than in adornment manager for performance and to avoid thread issues
             if (await this.GetServiceAsync(typeof(DTE)) is DTE dte)
