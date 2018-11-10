@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -87,11 +88,16 @@ namespace StringResourceVisualizer
             {
                 string lineText = line.Extent.GetText();
 
-                // TODO: make it work with any Resource file
-                const string SearchText = "StringRes.";
+                // TODO: pass this in
+                string[] searchTexts = new string[ResourceFiles.Count];
 
-                // TODO: support use of multiple resources in the same line
-                int matchIndex = lineText.IndexOf(SearchText);
+                for (int i = 0; i < ResourceFiles.Count; i++)
+                {
+                    searchTexts[i] = $"{Path.GetFileNameWithoutExtension(ResourceFiles[i])}.";
+                }
+
+                int matchIndex = lineText.IndexOfAny(searchTexts);
+
                 if (matchIndex >= 0)
                 {
                     if (!this.Resources.ContainsKey(lineNumber))
@@ -101,7 +107,7 @@ namespace StringResourceVisualizer
                         int end = line.Start + (line.Extent.Length - 1);
                         var span = new SnapshotSpan(this.view.TextSnapshot, Span.FromBounds(start, end));
 
-                        var endPos = lineText.IndexOfAny(new[] { ' ', '.', '"', '(', ')' }, matchIndex + SearchText.Length);
+                        var endPos = lineText.IndexOfAny(new[] { ' ', '.', '"', '(', ')' }, matchIndex + lineText.IndexOf('.', matchIndex) + 1);
 
                         string foundText;
 
@@ -114,27 +120,28 @@ namespace StringResourceVisualizer
                             foundText = lineText.Substring(matchIndex);
                         }
 
+                        // TODO: review whether should display anything if can't find actual text
                         string displayText = "???" + foundText;
 
                         if (ResourceFiles.Any())
                         {
-                                var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
+                            var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
 
                             var resxPath = ResourceFiles.First();
 
-                                    // TODO: cache xml file
-                                    var xdoc = new XmlDocument();
-                                    xdoc.Load(resxPath);
+                            // TODO: cache xml file
+                            var xdoc = new XmlDocument();
+                            xdoc.Load(resxPath);
 
                             foreach (XmlElement element in xdoc.GetElementsByTagName("data"))
-                                    {
-                                        if (element.GetAttribute("name") == resourceName)
-                                        {
-                                            var valueElement = element.GetElementsByTagName("value").Item(0);
-                                            displayText = valueElement.InnerText;
-                                            break;
-                                        }
-                                    }
+                            {
+                                if (element.GetAttribute("name") == resourceName)
+                                {
+                                    var valueElement = element.GetElementsByTagName("value").Item(0);
+                                    displayText = valueElement.InnerText;
+                                    break;
+                                }
+                            }
                         }
 
                         // TODO: color should be from Visualstuidio resources
@@ -164,6 +171,7 @@ namespace StringResourceVisualizer
                         Canvas.SetLeft(tb, lineGeometry.Bounds.Left);
                         Canvas.SetTop(tb, line.TextTop - tb.Height);
 
+                        // Check need this
                         this.layer.RemoveAdornment(tb);
                         this.layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, tag: null, adornment: tb, removedCallback: null);
                     }
@@ -178,6 +186,28 @@ namespace StringResourceVisualizer
         private void UnsubscribeFromViewerEvents()
         {
             this.view.LayoutChanged -= this.LayoutChangedHandler;
+        }
+    }
+
+    public static class StringExtensions
+    {
+        public static int IndexOfAny(this string source, params string[] values)
+        {
+            var valuePostions = new Dictionary<string, int>();
+
+            foreach (var value in values)
+            {
+                valuePostions.Add(value, source.IndexOf(value));
+            }
+
+            if (valuePostions.Any(v => v.Value > -1))
+            {
+                var result = valuePostions.Select(v => v.Value).Where(v => v > -1).OrderByDescending(v => v).FirstOrDefault();
+
+                return result;
+            }
+
+            return -1;
         }
     }
 }
