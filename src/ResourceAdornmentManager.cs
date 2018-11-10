@@ -9,8 +9,6 @@ using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Xml;
-using EnvDTE;
-using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
@@ -43,7 +41,6 @@ namespace StringResourceVisualizer
             this.view.LayoutChanged += this.LayoutChangedHandler;
         }
 
-        public static AsyncPackage Package { get; set; }
         public static List<string> ResourceFiles { get; set; }
 
         // Dictionary to map line number to UI displaying text
@@ -60,7 +57,7 @@ namespace StringResourceVisualizer
         /// <summary>
         /// On layout change add the adornment to any reformatted lines.
         /// </summary>
-        private async void LayoutChangedHandler(object sender, TextViewLayoutChangedEventArgs e)
+        private void LayoutChangedHandler(object sender, TextViewLayoutChangedEventArgs e)
         {
             this.Resources.Clear();
 
@@ -70,7 +67,8 @@ namespace StringResourceVisualizer
                 int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
                 try
                 {
-                    await this.CreateVisualsAsync(line, lineNumber);
+                    //await this.CreateVisualsAsync(line, lineNumber);
+                    this.CreateVisuals(line, lineNumber);
                 }
                 catch (InvalidOperationException ex)
                 {
@@ -82,7 +80,8 @@ namespace StringResourceVisualizer
         /// <summary>
         /// Scans text line for use of resource class, then adds new adornment.
         /// </summary>
-        private async System.Threading.Tasks.Task CreateVisualsAsync(ITextViewLine line, int lineNumber)
+        //private async System.Threading.Tasks.Task CreateVisualsAsync(ITextViewLine line, int lineNumber)
+        private void CreateVisuals(ITextViewLine line, int lineNumber)
         {
             try
             {
@@ -117,27 +116,17 @@ namespace StringResourceVisualizer
 
                         string displayText = "???" + foundText;
 
-                        if (Package != null)
+                        if (ResourceFiles.Any())
                         {
-                            // TODO: Address Main Thread Issue
-                            DTE dte = await Package.GetServiceAsync(typeof(DTE)) as DTE;
-
-                            if (dte != null)
-                            {
                                 var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
 
-                                var project = ((Array)dte.ActiveSolutionProjects).GetValue(0) as Project;
+                            var resxPath = ResourceFiles.First();
 
-                                // TODO: Support resx & resw
-                                var resxPath = this.SolutionFiles(project).FirstOrDefault(f => f.FileNames[0].EndsWith("StringRes.resx", StringComparison.InvariantCultureIgnoreCase));
-
-                                if (resxPath != null)
-                                {
                                     // TODO: cache xml file
                                     var xdoc = new XmlDocument();
-                                    xdoc.Load(resxPath.FileNames[0]);
+                                    xdoc.Load(resxPath);
 
-                                    foreach (XmlElement element in xdoc.GetElementsByTagName("data"))
+                            foreach (XmlElement element in xdoc.GetElementsByTagName("data"))
                                     {
                                         if (element.GetAttribute("name") == resourceName)
                                         {
@@ -146,16 +135,13 @@ namespace StringResourceVisualizer
                                             break;
                                         }
                                     }
-                                }
-                            }
                         }
 
                         // TODO: color should be from Visualstuidio resources
-                        // TODO: adjust height
-
                         var brush  = new SolidColorBrush(Colors.Gray);
                         brush.Freeze();
 
+                        // TODO: adjust height
                         TextBlock tb = new TextBlock
                         {
                             Foreground = brush,
@@ -186,37 +172,6 @@ namespace StringResourceVisualizer
             catch (Exception ex)
             {
                 Debug.WriteLine(ex);
-            }
-        }
-
-        private IEnumerable<ProjectItem> Recurse(ProjectItems i)
-        {
-            if (i != null)
-            {
-                foreach (ProjectItem j in i)
-                {
-                    foreach (var k in this.Recurse(j))
-                    {
-                        yield return k;
-                    }
-                }
-            }
-        }
-
-        private IEnumerable<ProjectItem> Recurse(ProjectItem i)
-        {
-            yield return i;
-            foreach (var j in this.Recurse(i.ProjectItems))
-            {
-                yield return j;
-            }
-        }
-
-        private IEnumerable<ProjectItem> SolutionFiles(EnvDTE.Project project)
-        {
-            foreach (ProjectItem item in this.Recurse(project.ProjectItems))
-            {
-                yield return item;
             }
         }
 

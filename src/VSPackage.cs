@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -63,9 +64,64 @@ namespace StringResourceVisualizer
             // Do any initialization that requires the UI thread after switching to the UI thread.
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            ResourceAdornmentManager.Package = this;
+            //Use nested methods to avoid prompt (and need) for MainThead check/switch
+            IEnumerable<ProjectItem> RecurseProjectItems(ProjectItems projItems)
+            {
+                if (projItems != null)
+                {
+                    foreach (ProjectItem item in projItems)
+                    {
+                        foreach (var subItem in RecurseProjectItem(item))
+                        {
+                            yield return subItem;
+                        }
+                    }
+                }
+            }
 
-            (await this.GetServiceAsync(typeof(DTE)) as DTE).StatusBar.Text = "Package initialized: StringResourceVisualizer";
+            IEnumerable<ProjectItem> RecurseProjectItem(ProjectItem item)
+            {
+                yield return item;
+                foreach (var subItem in RecurseProjectItems(item.ProjectItems))
+                {
+                    yield return subItem;
+                }
+            }
+
+            IEnumerable<ProjectItem> GetProjectFiles(Project proj)
+            {
+                    foreach (ProjectItem item in RecurseProjectItems(proj.ProjectItems))
+                    {
+                        yield return item;
+                    }
+            }
+
+            // TODO: handle res files being removed or added to a project - currently will be ignored
+            // Get all resource files from the solution
+            // Do this now, rather than in adornment manager for performance and to avoid thread issues
+            if (await this.GetServiceAsync(typeof(DTE)) is DTE dte)
+            {
+                foreach (var project in (Array)dte.ActiveSolutionProjects)
+                {
+                    foreach (var solFile in GetProjectFiles((Project)project))
+                    {
+                        var filePath = solFile.FileNames[0];
+                        var fileExt = System.IO.Path.GetExtension(filePath);
+
+                        // Only interested in resource files
+                        if (fileExt.Equals(".resx") || fileExt.Equals(".resw"))
+                        {
+                            // Only want neutral language ones, not locale specific versions
+                            if (!System.IO.Path.GetFileNameWithoutExtension(filePath).Contains("."))
+                            {
+                                ResourceAdornmentManager.ResourceFiles.Add(filePath);
+                            }
+                        }
+                    }
+                }
+
+                (await this.GetServiceAsync(typeof(DTE)) as DTE).StatusBar.Text = $"Initialized StringResourceVisualizer with {ResourceAdornmentManager.ResourceFiles.Count} resource files.";
+            }
         }
     }
 }
