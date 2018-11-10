@@ -23,7 +23,7 @@ namespace StringResourceVisualizer
     {
         private readonly IAdornmentLayer layer;
         private readonly IWpfTextView view;
-        private List<XmlDocument> xmlDocs = null;
+        private List<(string path, XmlDocument xDoc)> xmlDocs = null;
 
         /// <summary>
         /// Initializes static members of the <see cref="ResourceAdornmentManager"/> class.
@@ -52,7 +52,7 @@ namespace StringResourceVisualizer
         // Dictionary to map line number to UI displaying text
         public Dictionary<int, TextBlock> ResourcesToAdorn { get; set; }
 
-        public List<XmlDocument> XmlDocs
+        public List<(string path, XmlDocument xDoc)> XmlDocs
         {
             get
             {
@@ -60,14 +60,14 @@ namespace StringResourceVisualizer
                 {
                     try
                     {
-                        xmlDocs = new List<XmlDocument>();
+                        xmlDocs = new List<(string, XmlDocument)>();
 
                         foreach (var resourceFile in ResourceFiles)
                         {
                             var xdoc = new XmlDocument();
                             xdoc.Load(resourceFile);
 
-                            xmlDocs.Add(xdoc);
+                            xmlDocs.Add((resourceFile, xdoc));
                         }
 
                     }
@@ -164,16 +164,20 @@ namespace StringResourceVisualizer
                         {
                             var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
 
-                            foreach (var xdoc in XmlDocs)
+                            foreach (var item in XmlDocs)
                             {
-                                // TODO: don't just go through every XML doc, check based on name if likely to contain expected value
-                                foreach (XmlElement element in xdoc.GetElementsByTagName("data"))
+                                // As may be multiple resource files, only check the ones which have teh correct name.
+                                // If multiple projects in the solutions with same resource name (file & name), but different res value, the wrong value *may* be displayed
+                                if (foundText.StartsWith($"{Path.GetFileNameWithoutExtension(item.path)}."))
                                 {
-                                    if (element.GetAttribute("name") == resourceName)
+                                    foreach (XmlElement element in item.xDoc.GetElementsByTagName("data"))
                                     {
-                                        var valueElement = element.GetElementsByTagName("value").Item(0);
-                                        displayText = valueElement.InnerText;
-                                        break;
+                                        if (element.GetAttribute("name") == resourceName)
+                                        {
+                                            var valueElement = element.GetElementsByTagName("value").Item(0);
+                                            displayText = valueElement.InnerText;
+                                            break;
+                                        }
                                     }
                                 }
                             }
