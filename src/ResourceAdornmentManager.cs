@@ -191,10 +191,6 @@ namespace StringResourceVisualizer
                             Height = (TextSize * 1.4)
                         };
 
-                        // TODO: check still need this
-                        var finalRect = default(System.Windows.Rect);
-                        tb.Arrange(finalRect);
-
                         // TODO: review need for this (might be an async issue)
                         if (!this.ResourcesToAdorn.ContainsKey(lineNumber))
                         {
