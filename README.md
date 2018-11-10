@@ -20,7 +20,7 @@ If you know of any good extensions that you think would benefit UWP developers, 
 
 ## Contribute
 
-Check out the [contribution guidelines](.github/CONTRIBUTING.md) if you want to contribute to this project.
+Check out the [contribution guidelines](CONTRIBUTING.md) if you want to contribute to this project.
 
 For cloning and building this project yourself, make sure to install the
 [Extensibility Tools](https://visualstudiogallery.msdn.microsoft.com/ab39a092-1343-46e2-b0f1-6a3f91155aa6)
