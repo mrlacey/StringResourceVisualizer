@@ -158,7 +158,8 @@ namespace StringResourceVisualizer
                 ResourceAdornmentManager.TextSize = _fontSize;
                 ResourceAdornmentManager.TextForegroundColor = _textColor;
 
-                (await this.GetServiceAsync(typeof(DTE)) as DTE).StatusBar.Text = $"Initialized StringResourceVisualizer with {ResourceAdornmentManager.ResourceFiles.Count} resource files.";
+                var plural = ResourceAdornmentManager.ResourceFiles.Count > 1 ? "s" : string.Empty;
+                (await this.GetServiceAsync(typeof(DTE)) as DTE).StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";
             }
         }
     }
