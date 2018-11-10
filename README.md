@@ -14,10 +14,6 @@ Visual Studio extension that shows the text of a string resource (.resx or .resw
 
 See the [change log](CHANGELOG.md) for changes and road map.
 
-## Suggest new extensions
-
-If you know of any good extensions that you think would benefit UWP developers, then log an issue with the suggestion on the [GitHub issue tracker](https://github.com/mrlacey/StringResourceVisualizer/issues).
-
 ## Contribute
 
 Check out the [contribution guidelines](CONTRIBUTING.md) if you want to contribute to this project.
