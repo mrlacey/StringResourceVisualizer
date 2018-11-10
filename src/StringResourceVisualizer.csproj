@@ -64,13 +64,20 @@
     <Compile Include="VSPackage.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\LICENSE">
+      <Link>Resources\LICENSE</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="packages.config" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\VSPackage.ico" />
+    <Content Include="Resources\Icon.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.VisualStudio.SDK.Analyzers.15.8.36\analyzers\cs\Microsoft.VisualStudio.SDK.Analyzers.dll" />
@@ -164,9 +171,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="VSPackage.resx">
-      <DependentUpon>VSPackage.cs</DependentUpon>
       <MergeWithCTO>true</MergeWithCTO>
       <ManifestResourceName>VSPackage</ManifestResourceName>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

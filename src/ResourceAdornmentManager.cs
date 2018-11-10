@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Web.UI.Design;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Xml;
@@ -59,14 +58,22 @@ namespace StringResourceVisualizer
             {
                 if (xmlDocs == null)
                 {
-                    xmlDocs = new List<XmlDocument>();
-
-                    foreach (var resourceFile in ResourceFiles)
+                    try
                     {
-                        var xdoc = new XmlDocument();
-                        xdoc.Load(resourceFile);
+                        xmlDocs = new List<XmlDocument>();
 
-                        xmlDocs.Add(xdoc);
+                        foreach (var resourceFile in ResourceFiles)
+                        {
+                            var xdoc = new XmlDocument();
+                            xdoc.Load(resourceFile);
+
+                            xmlDocs.Add(xdoc);
+                        }
+
+                    }
+                    catch (Exception exc)
+                    {
+                        Debug.WriteLine(exc);
                     }
                 }
 
@@ -91,7 +98,7 @@ namespace StringResourceVisualizer
             {
                 this.ResourcesToAdorn.Clear();
 
-                // Determine text to search for
+                // Determine text to search for (based on file names)
                 var searchTexts = new string[ResourceFiles.Count];
 
                 for (int i = 0; i < ResourceFiles.Count; i++)
@@ -99,7 +106,7 @@ namespace StringResourceVisualizer
                     searchTexts[i] = $"{Path.GetFileNameWithoutExtension(ResourceFiles[i])}.";
                 }
 
-                ////// Will need to clear this here when have the ability to handle resource files added to project once opened
+                ////// TODO: Will need to clear this here when have the ability to handle resource files added to project once opened
                 ////XmlDocs.Clear();
 
                 foreach (ITextViewLine line in this.view.TextViewLines)

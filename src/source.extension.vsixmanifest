@@ -4,6 +4,12 @@
         <Identity Id="StringResourceVisualizer.a05f89b1-98f8-4b37-8f84-4fdebc44aa25" Version="1.0" Language="en-US" Publisher="Matt Lacey Ltd." />
         <DisplayName>String Resource Visualizer</DisplayName>
         <Description xml:space="preserve">View the text of string resources (RESX or RESW) inline when they're used in code.</Description>
+        <MoreInfo>https://github.com/mrlacey/StringResourceVisualizer</MoreInfo>
+        <License>Resources\LICENSE</License>
+        <ReleaseNotes>https://github.com/mrlacey/StringResourceVisualizer/CHANGELOG.md</ReleaseNotes>
+        <Icon>Resources\Icon.png</Icon>
+        <PreviewImage>Resources\Icon.png</PreviewImage>
+        <Tags>strings, resources, localization, resx, resw, I18N</Tags>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0, 16.0)" />
