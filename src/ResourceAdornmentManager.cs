@@ -188,12 +188,14 @@ namespace StringResourceVisualizer
                             var brush = new SolidColorBrush(TextForegroundColor);
                             brush.Freeze();
 
+                            const double TextBlockSizeToFontScaleFactor = 1.4;
+
                             TextBlock tb = new TextBlock
                             {
                                 Foreground = brush,
                                 Text = $"\"{displayText}\"",
                                 FontSize = TextSize,
-                                Height = (TextSize * 1.4)
+                                Height = (TextSize * TextBlockSizeToFontScaleFactor)
                             };
 
                             // TODO: review need for this (might be an async issue)
