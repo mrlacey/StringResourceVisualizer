@@ -1,0 +1,42 @@
+﻿// <copyright file="MyLineTransformSource.cs" company="Matt Lacey">
+// Copyright (c) Matt Lacey. All rights reserved.
+// </copyright>
+
+using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Text.Formatting;
+
+namespace StringResAdorners
+{
+    /// <summary>
+    /// Resizes relevant lines in the editor.
+    /// </summary>
+    internal class MyLineTransformSource : ILineTransformSource
+    {
+        private ResourceAdornmentManager manager;
+
+        public MyLineTransformSource(ResourceAdornmentManager manager)
+        {
+            this.manager = manager;
+        }
+
+        LineTransform ILineTransformSource.GetLineTransform(ITextViewLine line, double yPosition, ViewRelativePosition placement)
+        {
+            int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
+            LineTransform lineTransform;
+
+            if (this.manager.Resources.ContainsKey(lineNumber))
+            {
+                // TODO: adjust height
+                var defaultTopSpace = line.DefaultLineTransform.TopSpace;
+                var defaultBottomSpace = line.DefaultLineTransform.BottomSpace;
+                lineTransform = new LineTransform(defaultTopSpace + 20, defaultBottomSpace, 1.0);
+            }
+            else
+            {
+                lineTransform = new LineTransform(0, 0, 1.0);
+            }
+
+            return lineTransform;
+        }
+    }
+}
