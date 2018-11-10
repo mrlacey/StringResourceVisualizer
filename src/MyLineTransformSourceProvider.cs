@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 using Microsoft.VisualStudio.Utilities;
 
-namespace StringResAdorners
+namespace StringResourceVisualizer
 {
     //// TODO: support VB.Net too
 

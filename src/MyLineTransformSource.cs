@@ -5,14 +5,14 @@
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 
-namespace StringResAdorners
+namespace StringResourceVisualizer
 {
     /// <summary>
     /// Resizes relevant lines in the editor.
     /// </summary>
     internal class MyLineTransformSource : ILineTransformSource
     {
-        private ResourceAdornmentManager manager;
+        private readonly ResourceAdornmentManager manager;
 
         public MyLineTransformSource(ResourceAdornmentManager manager)
         {

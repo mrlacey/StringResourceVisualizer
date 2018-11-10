@@ -15,15 +15,15 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 
-namespace StringResAdorners
+namespace StringResourceVisualizer
 {
     /// <summary>
     /// Important class. Handles creation of adornments on appropriate lines.
     /// </summary>
     internal class ResourceAdornmentManager : IDisposable
     {
-        private IAdornmentLayer layer;
-        private IWpfTextView view;
+        private readonly IAdornmentLayer layer;
+        private readonly IWpfTextView view;
 
         /// <summary>
         /// Initializes static members of the <see cref="ResourceAdornmentManager"/> class.
@@ -120,7 +120,7 @@ namespace StringResAdorners
                         if (Package != null)
                         {
                             // TODO: Address Main Thread Issue
-                            var dte = await Package.GetServiceAsync(typeof(DTE)) as DTE;
+                            DTE dte = await Package.GetServiceAsync(typeof(DTE)) as DTE;
 
                             if (dte != null)
                             {
@@ -150,13 +150,18 @@ namespace StringResAdorners
                             }
                         }
 
-                        // TODO: freeze the brush
                         // TODO: color should be from Visualstuidio resources
                         // TODO: adjust height
-                        TextBlock tb = new TextBlock();
-                        tb.Foreground = new SolidColorBrush(Colors.Gray);
-                        tb.Text = $"\"{displayText}\"";
-                        tb.Height = 20;
+
+                        var brush  = new SolidColorBrush(Colors.Gray);
+                        brush.Freeze();
+
+                        TextBlock tb = new TextBlock
+                        {
+                            Foreground = brush,
+                            Text = $"\"{displayText}\"",
+                            Height = 20
+                        };
 
                         // TODO: check still need this
                         var finalRect = default(System.Windows.Rect);
