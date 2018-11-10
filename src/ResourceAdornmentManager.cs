@@ -10,6 +10,7 @@ using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Xml;
+using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
@@ -37,15 +38,19 @@ namespace StringResourceVisualizer
             this.view = view;
             this.layer = view.GetAdornmentLayer("StringResourceCommentLayer");
 
-            this.Resources = new Dictionary<int, TextBlock>();
+            this.ResourcesToAdorn = new Dictionary<int, TextBlock>();
 
             this.view.LayoutChanged += this.LayoutChangedHandler;
         }
 
         public static List<string> ResourceFiles { get; set; }
 
+        public static int TextSize { get; set; }
+
+        public static Color TextForegroundColor { get; set; }
+
         // Dictionary to map line number to UI displaying text
-        public Dictionary<int, TextBlock> Resources { get; set; }
+        public Dictionary<int, TextBlock> ResourcesToAdorn { get; set; }
 
         /// <summary>
         /// This is called by the TextView when closing. Events are unsubscribed here.
@@ -60,20 +65,23 @@ namespace StringResourceVisualizer
         /// </summary>
         private void LayoutChangedHandler(object sender, TextViewLayoutChangedEventArgs e)
         {
-            this.Resources.Clear();
-
-            // TODO: clear cached resource file here
-            foreach (ITextViewLine line in this.view.TextViewLines)
+            if (ResourceFiles.Any())
             {
-                int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
-                try
+                this.ResourcesToAdorn.Clear();
+
+                // TODO: clear cached resource file here
+                foreach (ITextViewLine line in this.view.TextViewLines)
                 {
-                    //await this.CreateVisualsAsync(line, lineNumber);
-                    this.CreateVisuals(line, lineNumber);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    Debug.WriteLine(ex);
+                    int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
+                    try
+                    {
+                        //await this.CreateVisualsAsync(line, lineNumber);
+                        this.CreateVisuals(line, lineNumber);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        Debug.WriteLine(ex);
+                    }
                 }
             }
         }
@@ -100,14 +108,14 @@ namespace StringResourceVisualizer
 
                 if (matchIndex >= 0)
                 {
-                    if (!this.Resources.ContainsKey(lineNumber))
+                    if (!this.ResourcesToAdorn.ContainsKey(lineNumber))
                     {
                         // Get coordinates of text
                         int start = line.Extent.Start.Position + matchIndex;
                         int end = line.Start + (line.Extent.Length - 1);
                         var span = new SnapshotSpan(this.view.TextSnapshot, Span.FromBounds(start, end));
 
-                        var endPos = lineText.IndexOfAny(new[] { ' ', '.', '"', '(', ')' }, matchIndex + lineText.IndexOf('.', matchIndex) + 1);
+                        var endPos = lineText.IndexOfAny(new[] { ' ', '.', '"', '(', ')' }, lineText.IndexOf('.', matchIndex) + 1);
 
                         string foundText;
 
@@ -127,9 +135,10 @@ namespace StringResourceVisualizer
                         {
                             var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
 
+                            // TODO: handle multiple res files
                             var resxPath = ResourceFiles.First();
 
-                            // TODO: cache xml file
+                            // TODO: cache xml files
                             var xdoc = new XmlDocument();
                             xdoc.Load(resxPath);
 
@@ -144,8 +153,7 @@ namespace StringResourceVisualizer
                             }
                         }
 
-                        // TODO: color should be from Visualstuidio resources
-                        var brush  = new SolidColorBrush(Colors.Gray);
+                        var brush  = new SolidColorBrush(TextForegroundColor);
                         brush.Freeze();
 
                         // TODO: adjust height
@@ -153,6 +161,7 @@ namespace StringResourceVisualizer
                         {
                             Foreground = brush,
                             Text = $"\"{displayText}\"",
+                            FontSize = TextSize,
                             Height = 20
                         };
 
@@ -161,9 +170,9 @@ namespace StringResourceVisualizer
                         tb.Arrange(finalRect);
 
                         // TODO: review need for this (might be an async issue)
-                        if (!this.Resources.ContainsKey(lineNumber))
+                        if (!this.ResourcesToAdorn.ContainsKey(lineNumber))
                         {
-                            this.Resources.Add(lineNumber, tb);
+                            this.ResourcesToAdorn.Add(lineNumber, tb);
                         }
 
                         var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);

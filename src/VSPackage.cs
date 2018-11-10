@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Media;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
@@ -119,6 +120,42 @@ namespace StringResourceVisualizer
                         }
                     }
                 }
+
+                IVsFontAndColorStorage storage = (IVsFontAndColorStorage)VSPackage.GetGlobalService(typeof(IVsFontAndColorStorage));
+
+                var guid = new Guid("A27B4E24-A735-4d1d-B8E7-9716E1E3D8E0");
+
+                // Seem like reasonabel defaults as should be visible on light & dark theme
+                int _fontSize = 10;
+                Color _textColor = Colors.Gray;
+
+                if (storage != null && storage.OpenCategory(ref guid, (uint)(__FCSTORAGEFLAGS.FCSF_READONLY | __FCSTORAGEFLAGS.FCSF_LOADDEFAULTS)) == Microsoft.VisualStudio.VSConstants.S_OK)
+                {
+                    LOGFONTW[] Fnt = new LOGFONTW[] { new LOGFONTW() };
+                    FontInfo[] Info = new FontInfo[] { new FontInfo() };
+                    storage.GetFont(Fnt, Info);
+
+                    _fontSize = Info[0].wPointSize;
+                }
+
+                if (storage != null && storage.OpenCategory(ref guid, (uint)(__FCSTORAGEFLAGS.FCSF_NOAUTOCOLORS | __FCSTORAGEFLAGS.FCSF_LOADDEFAULTS)) == Microsoft.VisualStudio.VSConstants.S_OK)
+                {
+                    var info = new ColorableItemInfo[1];
+
+                    // Get the color value configured for regular string display
+                    storage.GetItem("String", info);
+
+                    var win32Color =(int)info[0].crForeground;
+
+                    int r = win32Color & 0x000000FF;
+                    int g = (win32Color & 0x0000FF00) >> 8;
+                    int b = (win32Color & 0x00FF0000) >> 16;
+
+                    _textColor = Color.FromRgb((byte)r, (byte)g, (byte)b);
+                }
+
+                ResourceAdornmentManager.TextSize = _fontSize;
+                ResourceAdornmentManager.TextForegroundColor = _textColor;
 
                 (await this.GetServiceAsync(typeof(DTE)) as DTE).StatusBar.Text = $"Initialized StringResourceVisualizer with {ResourceAdornmentManager.ResourceFiles.Count} resource files.";
             }

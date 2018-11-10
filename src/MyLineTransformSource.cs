@@ -24,7 +24,7 @@ namespace StringResourceVisualizer
             int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
             LineTransform lineTransform;
 
-            if (this.manager.Resources.ContainsKey(lineNumber))
+            if (this.manager.ResourcesToAdorn.ContainsKey(lineNumber))
             {
                 // TODO: adjust height
                 var defaultTopSpace = line.DefaultLineTransform.TopSpace;
