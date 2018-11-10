@@ -24,12 +24,12 @@ namespace StringResourceVisualizer
             int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
             LineTransform lineTransform;
 
+            // TODO: Don't show if line is collapsed
             if (this.manager.ResourcesToAdorn.ContainsKey(lineNumber))
             {
-                // TODO: adjust height
                 var defaultTopSpace = line.DefaultLineTransform.TopSpace;
                 var defaultBottomSpace = line.DefaultLineTransform.BottomSpace;
-                lineTransform = new LineTransform(defaultTopSpace + 20, defaultBottomSpace, 1.0);
+                lineTransform = new LineTransform(defaultTopSpace + ResourceAdornmentManager.TextSize, defaultBottomSpace, 1.0);
             }
             else
             {

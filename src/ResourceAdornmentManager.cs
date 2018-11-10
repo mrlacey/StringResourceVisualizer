@@ -7,10 +7,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Web.UI.Design;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Xml;
-using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
@@ -24,6 +24,7 @@ namespace StringResourceVisualizer
     {
         private readonly IAdornmentLayer layer;
         private readonly IWpfTextView view;
+        private List<XmlDocument> xmlDocs = null;
 
         /// <summary>
         /// Initializes static members of the <see cref="ResourceAdornmentManager"/> class.
@@ -52,6 +53,27 @@ namespace StringResourceVisualizer
         // Dictionary to map line number to UI displaying text
         public Dictionary<int, TextBlock> ResourcesToAdorn { get; set; }
 
+        public List<XmlDocument> XmlDocs
+        {
+            get
+            {
+                if (xmlDocs == null)
+                {
+                    xmlDocs = new List<XmlDocument>();
+
+                    foreach (var resourceFile in ResourceFiles)
+                    {
+                        var xdoc = new XmlDocument();
+                        xdoc.Load(resourceFile);
+
+                        xmlDocs.Add(xdoc);
+                    }
+                }
+
+                return xmlDocs;
+            }
+        }
+
         /// <summary>
         /// This is called by the TextView when closing. Events are unsubscribed here.
         /// </summary>
@@ -69,14 +91,23 @@ namespace StringResourceVisualizer
             {
                 this.ResourcesToAdorn.Clear();
 
-                // TODO: clear cached resource file here
+                // Determine text to search for
+                var searchTexts = new string[ResourceFiles.Count];
+
+                for (int i = 0; i < ResourceFiles.Count; i++)
+                {
+                    searchTexts[i] = $"{Path.GetFileNameWithoutExtension(ResourceFiles[i])}.";
+                }
+
+                ////// Will need to clear this here when have the ability to handle resource files added to project once opened
+                ////XmlDocs.Clear();
+
                 foreach (ITextViewLine line in this.view.TextViewLines)
                 {
                     int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
                     try
                     {
-                        //await this.CreateVisualsAsync(line, lineNumber);
-                        this.CreateVisuals(line, lineNumber);
+                        this.CreateVisuals(line, lineNumber, searchTexts);
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -90,19 +121,11 @@ namespace StringResourceVisualizer
         /// Scans text line for use of resource class, then adds new adornment.
         /// </summary>
         //private async System.Threading.Tasks.Task CreateVisualsAsync(ITextViewLine line, int lineNumber)
-        private void CreateVisuals(ITextViewLine line, int lineNumber)
+        private void CreateVisuals(ITextViewLine line, int lineNumber, string[] searchTexts)
         {
             try
             {
                 string lineText = line.Extent.GetText();
-
-                // TODO: pass this in
-                string[] searchTexts = new string[ResourceFiles.Count];
-
-                for (int i = 0; i < ResourceFiles.Count; i++)
-                {
-                    searchTexts[i] = $"{Path.GetFileNameWithoutExtension(ResourceFiles[i])}.";
-                }
 
                 int matchIndex = lineText.IndexOfAny(searchTexts);
 
@@ -128,41 +151,37 @@ namespace StringResourceVisualizer
                             foundText = lineText.Substring(matchIndex);
                         }
 
-                        // TODO: review whether should display anything if can't find actual text
+                        // TODO: Don't display anything if can't find actual text
                         string displayText = "???" + foundText;
 
                         if (ResourceFiles.Any())
                         {
                             var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
 
-                            // TODO: handle multiple res files
-                            var resxPath = ResourceFiles.First();
-
-                            // TODO: cache xml files
-                            var xdoc = new XmlDocument();
-                            xdoc.Load(resxPath);
-
-                            foreach (XmlElement element in xdoc.GetElementsByTagName("data"))
+                            foreach (var xdoc in XmlDocs)
                             {
-                                if (element.GetAttribute("name") == resourceName)
+                                // TODO: don't just go through every XML doc, check based on name if likely to contain expected value
+                                foreach (XmlElement element in xdoc.GetElementsByTagName("data"))
                                 {
-                                    var valueElement = element.GetElementsByTagName("value").Item(0);
-                                    displayText = valueElement.InnerText;
-                                    break;
+                                    if (element.GetAttribute("name") == resourceName)
+                                    {
+                                        var valueElement = element.GetElementsByTagName("value").Item(0);
+                                        displayText = valueElement.InnerText;
+                                        break;
+                                    }
                                 }
                             }
                         }
 
-                        var brush  = new SolidColorBrush(TextForegroundColor);
+                        var brush = new SolidColorBrush(TextForegroundColor);
                         brush.Freeze();
 
-                        // TODO: adjust height
                         TextBlock tb = new TextBlock
                         {
                             Foreground = brush,
                             Text = $"\"{displayText}\"",
                             FontSize = TextSize,
-                            Height = 20
+                            Height = (TextSize * 1.4)
                         };
 
                         // TODO: check still need this
@@ -195,28 +214,6 @@ namespace StringResourceVisualizer
         private void UnsubscribeFromViewerEvents()
         {
             this.view.LayoutChanged -= this.LayoutChangedHandler;
-        }
-    }
-
-    public static class StringExtensions
-    {
-        public static int IndexOfAny(this string source, params string[] values)
-        {
-            var valuePostions = new Dictionary<string, int>();
-
-            foreach (var value in values)
-            {
-                valuePostions.Add(value, source.IndexOf(value));
-            }
-
-            if (valuePostions.Any(v => v.Value > -1))
-            {
-                var result = valuePostions.Select(v => v.Value).Where(v => v > -1).OrderByDescending(v => v).FirstOrDefault();
-
-                return result;
-            }
-
-            return -1;
         }
     }
 }
