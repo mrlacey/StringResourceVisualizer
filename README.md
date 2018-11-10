@@ -4,7 +4,7 @@
 
 Download the extension from the [VS Marketplace](???????)
 or get the
-[nightly build](?????)
+[CI build](?????)
 
 ------------------------------------
 
