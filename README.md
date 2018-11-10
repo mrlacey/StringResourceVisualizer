@@ -4,7 +4,7 @@
 
 Download the extension from the [VS Marketplace](???????)
 or get the
-[CI build](?????)
+[CI build](http://vsixgallery.com/extension/StringResourceVisualizer.a05f89b1-98f8-4b37-8f84-4fdebc44aa25/)
 
 ------------------------------------
 
