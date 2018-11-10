@@ -158,8 +158,7 @@ namespace StringResourceVisualizer
                             foundText = lineText.Substring(matchIndex);
                         }
 
-                        // TODO: Don't display anything if can't find actual text
-                        string displayText = "???" + foundText;
+                        string displayText = null;
 
                         if (ResourceFiles.Any())
                         {
@@ -180,31 +179,35 @@ namespace StringResourceVisualizer
                             }
                         }
 
-                        var brush = new SolidColorBrush(TextForegroundColor);
-                        brush.Freeze();
-
-                        TextBlock tb = new TextBlock
+                        if (!string.IsNullOrWhiteSpace(displayText))
                         {
-                            Foreground = brush,
-                            Text = $"\"{displayText}\"",
-                            FontSize = TextSize,
-                            Height = (TextSize * 1.4)
-                        };
+                            var brush = new SolidColorBrush(TextForegroundColor);
+                            brush.Freeze();
 
-                        // TODO: review need for this (might be an async issue)
-                        if (!this.ResourcesToAdorn.ContainsKey(lineNumber))
-                        {
-                            this.ResourcesToAdorn.Add(lineNumber, tb);
+                            TextBlock tb = new TextBlock
+                            {
+                                Foreground = brush,
+                                Text = $"\"{displayText}\"",
+                                FontSize = TextSize,
+                                Height = (TextSize * 1.4)
+                            };
+
+                            // TODO: review need for this (might be an async issue)
+                            if (!this.ResourcesToAdorn.ContainsKey(lineNumber))
+                            {
+                                this.ResourcesToAdorn.Add(lineNumber, tb);
+                            }
+
+                            var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);
+
+                            Canvas.SetLeft(tb, lineGeometry.Bounds.Left);
+                            Canvas.SetTop(tb, line.TextTop - tb.Height);
+
+                            // Check need this
+                            this.layer.RemoveAdornment(tb);
+                            this.layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, tag: null,
+                                adornment: tb, removedCallback: null);
                         }
-
-                        var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);
-
-                        Canvas.SetLeft(tb, lineGeometry.Bounds.Left);
-                        Canvas.SetTop(tb, line.TextTop - tb.Height);
-
-                        // Check need this
-                        this.layer.RemoveAdornment(tb);
-                        this.layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, tag: null, adornment: tb, removedCallback: null);
                     }
                 }
             }
