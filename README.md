@@ -8,7 +8,7 @@ or get the
 
 ------------------------------------
 
-Visual Studio extension that shows the text of a string resource (.resx or .resw) when used inline in code.
+Visual Studio extension that shows the text of a string resource (.resx) when used inline in code.
 
 ![screenshot](./art/screenshot.png)
 

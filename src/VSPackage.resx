@@ -121,6 +121,6 @@
     <value>String Resource Visualizer</value>
   </data>
   <data name="112" xml:space="preserve">
-    <value>View the text of string resources (RESX or RESW) inline when they're used in code.</value>
+    <value>View the text of string resources (.resx) inline when they're used in code.</value>
   </data>
 </root>

@@ -97,6 +97,7 @@ namespace StringResourceVisualizer
                     }
             }
 
+            // TODO: handle solution load correctly. See https://github.com/Microsoft/VSSDK-Extensibility-Samples/tree/master/SolutionLoadEvents
             // TODO: handle res files being removed or added to a project - currently will be ignored. Issue #2
             // Get all resource files from the solution
             // Do this now, rather than in adornment manager for performance and to avoid thread issues
@@ -109,8 +110,8 @@ namespace StringResourceVisualizer
                         var filePath = solFile.FileNames[0];
                         var fileExt = System.IO.Path.GetExtension(filePath);
 
-                        // Only interested in resource files
-                        if (fileExt.Equals(".resx") || fileExt.Equals(".resw"))
+                        // Only interested in resx files
+                        if (fileExt.Equals(".resx"))
                         {
                             // Only want neutral language ones, not locale specific versions
                             if (!System.IO.Path.GetFileNameWithoutExtension(filePath).Contains("."))
