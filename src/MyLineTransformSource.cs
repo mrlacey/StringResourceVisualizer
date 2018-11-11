@@ -25,7 +25,7 @@ namespace StringResourceVisualizer
             LineTransform lineTransform;
 
             // TODO: Don't show if line is collapsed. Issue #3
-            if (this.manager.LinesToAdorn.Contains(lineNumber))
+            if (this.manager.DisplayedTextBlocks.ContainsKey(lineNumber))
             {
                 var defaultTopSpace = line.DefaultLineTransform.TopSpace;
                 var defaultBottomSpace = line.DefaultLineTransform.BottomSpace;

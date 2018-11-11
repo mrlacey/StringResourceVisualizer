@@ -38,7 +38,7 @@ namespace StringResourceVisualizer
             this.view = view;
             this.layer = view.GetAdornmentLayer("StringResourceCommentLayer");
 
-            this.LinesToAdorn = new List<int>();
+            this.DisplayedTextBlocks = new Dictionary<int, TextBlock>();
 
             this.view.LayoutChanged += this.LayoutChangedHandler;
         }
@@ -49,7 +49,9 @@ namespace StringResourceVisualizer
 
         public static Color TextForegroundColor { get; set; }
 
-        public List<int> LinesToAdorn { get; set; }
+        // Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
+        // Also use this to identify lines to pad so the textblocks can be seen
+        public Dictionary<int, TextBlock> DisplayedTextBlocks { get; set; }
 
         public List<(string path, XmlDocument xDoc)> XmlDocs
         {
@@ -95,8 +97,6 @@ namespace StringResourceVisualizer
         {
             if (ResourceFiles.Any())
             {
-                this.LinesToAdorn.Clear();
-
                 // Determine text to search for (based on file names)
                 var searchTexts = new string[ResourceFiles.Count];
 
@@ -139,12 +139,20 @@ namespace StringResourceVisualizer
             {
                 string lineText = line.Extent.GetText();
 
+                // Remove any textblock displayed on this line so it won't conflict with anything we add below.
+                // Handles no textblock to show or the text to display having changed.
+                if (this.DisplayedTextBlocks.ContainsKey(lineNumber))
+                {
+                    this.layer.RemoveAdornment(this.DisplayedTextBlocks[lineNumber]);
+                    this.DisplayedTextBlocks.Remove(lineNumber);
+                }
+
                 // TODO: need to handle multiple search texts being found on a line. Issue #4
                 int matchIndex = lineText.IndexOfAny(searchTexts);
 
                 if (matchIndex >= 0)
                 {
-                    if (!this.LinesToAdorn.Contains(lineNumber))
+                    if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
                     {
                         // Get coordinates of text
                         int start = line.Extent.Start.Position + matchIndex;
@@ -170,13 +178,13 @@ namespace StringResourceVisualizer
                         {
                             var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
 
-                            foreach (var item in XmlDocs)
+                            foreach (var (path, xDoc) in XmlDocs)
                             {
                                 // As may be multiple resource files, only check the ones which have teh correct name.
                                 // If multiple projects in the solutions with same resource name (file & name), but different res value, the wrong value *may* be displayed
-                                if (foundText.StartsWith($"{Path.GetFileNameWithoutExtension(item.path)}."))
+                                if (foundText.StartsWith($"{Path.GetFileNameWithoutExtension(path)}."))
                                 {
-                                    foreach (XmlElement element in item.xDoc.GetElementsByTagName("data"))
+                                    foreach (XmlElement element in xDoc.GetElementsByTagName("data"))
                                     {
                                         if (element.GetAttribute("name") == resourceName)
                                         {
@@ -204,7 +212,7 @@ namespace StringResourceVisualizer
                                 Height = (TextSize * TextBlockSizeToFontScaleFactor)
                             };
 
-                            this.LinesToAdorn.Add(lineNumber);
+                            this.DisplayedTextBlocks.Add(lineNumber, tb);
 
                             var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);
 
