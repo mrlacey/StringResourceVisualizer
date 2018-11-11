@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Media;
 using EnvDTE;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using SolutionEvents = Microsoft.VisualStudio.Shell.Events.SolutionEvents;
 using Task = System.Threading.Tasks.Task;
 
 namespace StringResourceVisualizer
@@ -31,7 +34,7 @@ namespace StringResourceVisualizer
     [ProvideAutoLoad(UIContextGuids.SolutionHasMultipleProjects, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
+    [InstalledProductRegistration("#110", "#112", "1.0")] // Info on this package for Help/About
     [Guid(VSPackage.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class VSPackage : AsyncPackage
@@ -65,7 +68,35 @@ namespace StringResourceVisualizer
             // Do any initialization that requires the UI thread after switching to the UI thread.
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            //Use nested methods to avoid prompt (and need) for MainThead check/switch
+            // Since this package might not be initialized until after a solution has finished loading,
+            // we need to check if a solution has already been loaded and then handle it.
+            bool isSolutionLoaded = await IsSolutionLoadedAsync();
+
+            if (isSolutionLoaded)
+            {
+                HandleOpenSolution();
+            }
+
+            // Listen for subsequent solution events
+            SolutionEvents.OnAfterOpenSolution += HandleOpenSolution;
+        }
+
+        private async Task<bool> IsSolutionLoadedAsync()
+        {
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var solService = await GetServiceAsync(typeof(SVsSolution)) as IVsSolution;
+
+            ErrorHandler.ThrowOnFailure(solService.GetProperty((int)__VSPROPID.VSPROPID_IsSolutionOpen, out object value));
+
+            return value is bool isSolOpen && isSolOpen;
+        }
+
+        private async void HandleOpenSolution(object sender = null, EventArgs e = null)
+        {
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            //Use nested methods to avoid prompt (and need) for multiple MainThead checks/switches
             IEnumerable<ProjectItem> RecurseProjectItems(ProjectItems projItems)
             {
                 if (projItems != null)
@@ -91,13 +122,12 @@ namespace StringResourceVisualizer
 
             IEnumerable<ProjectItem> GetProjectFiles(Project proj)
             {
-                    foreach (ProjectItem item in RecurseProjectItems(proj.ProjectItems))
-                    {
-                        yield return item;
-                    }
+                foreach (ProjectItem item in RecurseProjectItems(proj.ProjectItems))
+                {
+                    yield return item;
+                }
             }
 
-            // TODO: handle solution load correctly. See https://github.com/Microsoft/VSSDK-Extensibility-Samples/tree/master/SolutionLoadEvents
             // TODO: handle res files being removed or added to a project - currently will be ignored. Issue #2
             // Get all resource files from the solution
             // Do this now, rather than in adornment manager for performance and to avoid thread issues
@@ -146,7 +176,7 @@ namespace StringResourceVisualizer
                     // Get the color value configured for regular string display
                     storage.GetItem("String", info);
 
-                    var win32Color =(int)info[0].crForeground;
+                    var win32Color = (int)info[0].crForeground;
 
                     int r = win32Color & 0x000000FF;
                     int g = (win32Color & 0x0000FF00) >> 8;
