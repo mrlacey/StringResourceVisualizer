@@ -103,7 +103,7 @@ namespace StringResourceVisualizer
             // Do this now, rather than in adornment manager for performance and to avoid thread issues
             if (await this.GetServiceAsync(typeof(DTE)) is DTE dte)
             {
-                foreach (var project in (Array)dte.ActiveSolutionProjects)
+                foreach (var project in dte.Solution.Projects)
                 {
                     foreach (var solFile in GetProjectFiles((Project)project))
                     {
