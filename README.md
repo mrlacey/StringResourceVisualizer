@@ -2,7 +2,7 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/a8qsff6l76e04p06?svg=true)](https://ci.appveyor.com/project/mrlacey/stringresourcevisualizer)
 
-Download the extension from the [VS Marketplace](???????)
+Download the extension from the [VS Marketplace](https://marketplace.visualstudio.com/items?itemName=MattLaceyLtd.StringResourceVisualizer)
 or get the
 [CI build](http://vsixgallery.com/extension/StringResourceVisualizer.a05f89b1-98f8-4b37-8f84-4fdebc44aa25/)
 
