@@ -105,8 +105,7 @@ namespace StringResourceVisualizer
                     searchTexts[i] = $"{Path.GetFileNameWithoutExtension(ResourceFiles[i])}.";
                 }
 
-                ////// TODO: Will need to clear this here when have the ability to handle resource files added to project once opened Issue #2
-                ////XmlDocs.Clear();
+                this.ResetXmlDocs();
 
                 foreach (ITextViewLine line in this.view.TextViewLines)
                 {
@@ -121,6 +120,13 @@ namespace StringResourceVisualizer
                     }
                 }
             }
+        }
+
+        private void ResetXmlDocs()
+        {
+            // Set this to null so the resource files are re-read when next needed.
+            // This will pick up any changes that have happened.
+            this.xmlDocs = null;
         }
 
         /// <summary>
