@@ -154,11 +154,6 @@ namespace StringResourceVisualizer
                 {
                     if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
                     {
-                        // Get coordinates of text
-                        int start = line.Extent.Start.Position + matchIndex;
-                        int end = line.Start + (line.Extent.Length - 1);
-                        var span = new SnapshotSpan(this.view.TextSnapshot, Span.FromBounds(start, end));
-
                         var endPos = lineText.IndexOfAny(new[] { ' ', '.', '"', '(', ')' }, lineText.IndexOf('.', matchIndex) + 1);
 
                         string foundText;
@@ -180,7 +175,7 @@ namespace StringResourceVisualizer
 
                             foreach (var (path, xDoc) in XmlDocs)
                             {
-                                // As may be multiple resource files, only check the ones which have teh correct name.
+                                // As may be multiple resource files, only check the ones which have the correct name.
                                 // If multiple projects in the solutions with same resource name (file & name), but different res value, the wrong value *may* be displayed
                                 if (foundText.StartsWith($"{Path.GetFileNameWithoutExtension(path)}."))
                                 {
@@ -214,6 +209,10 @@ namespace StringResourceVisualizer
 
                             this.DisplayedTextBlocks.Add(lineNumber, tb);
 
+                            // Get coordinates of text
+                            int start = line.Extent.Start.Position + matchIndex;
+                            int end = line.Start + (line.Extent.Length - 1);
+                            var span = new SnapshotSpan(this.view.TextSnapshot, Span.FromBounds(start, end));
                             var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);
 
                             Canvas.SetLeft(tb, lineGeometry.Bounds.Left);
