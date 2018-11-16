@@ -1,6 +1,6 @@
 # Road map
 
-- [ ] Support VB.Net
+- [x] Support VB.Net
 - [ ] Support resource files added to the project once opened
 
 Features that have a checkmark are complete and available for
