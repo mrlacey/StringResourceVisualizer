@@ -8,14 +8,12 @@ using Microsoft.VisualStudio.Utilities;
 
 namespace StringResourceVisualizer
 {
-    //// TODO: support VB.Net too.  Issue #1
-
     /// <summary>
     /// Establishes an <see cref="IAdornmentLayer"/> to place the adornment on and exports the <see cref="IWpfTextViewCreationListener"/>
     /// that instantiates the adornment on the event of a <see cref="IWpfTextView"/>'s creation.
     /// </summary>
     [Export(typeof(IWpfTextViewCreationListener))]
-    [ContentType("CSharp")]
+    [ContentType("CSharp"), ContentType("Basic")]
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal sealed class ResourceAdornmentManagerFactory : IWpfTextViewCreationListener
     {

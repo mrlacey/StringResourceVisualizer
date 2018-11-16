@@ -9,10 +9,8 @@ using Microsoft.VisualStudio.Utilities;
 
 namespace StringResourceVisualizer
 {
-    //// TODO: support VB.Net too. Issue #1
-
     [Export(typeof(ILineTransformSourceProvider))]
-    [ContentType("CSharp")]
+    [ContentType("CSharp"), ContentType("Basic")]
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal class MyLineTransformSourceProvider : ILineTransformSourceProvider
     {
