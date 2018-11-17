@@ -75,7 +75,7 @@ namespace StringResourceVisualizer
 
             if (isSolutionLoaded)
             {
-                HandleOpenSolution(null, null);
+                await HandleOpenSolutionAsync();
             }
 
             // Listen for subsequent solution events
@@ -205,10 +205,6 @@ namespace StringResourceVisualizer
                 var plural = ResourceAdornmentManager.ResourceFiles.Count > 1 ? "s" : string.Empty;
                 dte.StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";
             }
-        }
-
-        private void ErrorLogger(Task task)
-        {
         }
     }
 
