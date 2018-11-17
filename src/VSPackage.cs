@@ -9,6 +9,7 @@ using EnvDTE;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Threading;
 using SolutionEvents = Microsoft.VisualStudio.Shell.Events.SolutionEvents;
 using Task = System.Threading.Tasks.Task;
 
@@ -74,7 +75,7 @@ namespace StringResourceVisualizer
 
             if (isSolutionLoaded)
             {
-                await HandleOpenSolutionAsync();
+                HandleOpenSolution(null, null);
             }
 
             // Listen for subsequent solution events
@@ -94,7 +95,7 @@ namespace StringResourceVisualizer
 
         private void HandleOpenSolution(object sender, EventArgs e)
         {
-            JoinableTaskFactory.RunAsync(HandleOpenSolutionAsync).Task.FileAndForget("StringResourceVisualizer");
+            JoinableTaskFactory.RunAsync(HandleOpenSolutionAsync).Task.LogAndForget(GetType());
         }
 
         private async Task HandleOpenSolutionAsync()
@@ -158,6 +159,7 @@ namespace StringResourceVisualizer
                             // Only want neutral language ones, not locale specific versions
                             if (!System.IO.Path.GetFileNameWithoutExtension(filePath).Contains("."))
                             {
+                                Console.WriteLine(filePath);
                                 ResourceAdornmentManager.ResourceFiles.Add(filePath);
                             }
                         }
@@ -201,8 +203,26 @@ namespace StringResourceVisualizer
                 ResourceAdornmentManager.TextForegroundColor = _textColor;
 
                 var plural = ResourceAdornmentManager.ResourceFiles.Count > 1 ? "s" : string.Empty;
-                (await this.GetServiceAsync(typeof(DTE)) as DTE).StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";
+                dte.StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";
             }
+        }
+
+        private void ErrorLogger(Task task)
+        {
+        }
+    }
+
+    static class TaskExtensions
+    {
+        internal static void LogAndForget(this Task task, Type type)
+        {
+            task.ContinueWith(t =>
+            {
+                if (t.Exception != null)
+                {
+                    VsShellUtilities.LogError(type.FullName, t.Exception.ToString());
+                }
+            });
         }
     }
 }
