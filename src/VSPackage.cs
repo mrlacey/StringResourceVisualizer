@@ -143,7 +143,8 @@ namespace StringResourceVisualizer
                 {
                     foreach (var solFile in GetProjectFiles((Project)project))
                     {
-                        var filePath = solFile.FileNames[0];
+                        // The index of file names from 1 to FileCount for the project item.
+                        var filePath = solFile.FileNames[1];
                         var fileExt = System.IO.Path.GetExtension(filePath);
 
                         // Only interested in resx files
