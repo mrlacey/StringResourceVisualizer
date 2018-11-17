@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -74,7 +75,7 @@ namespace StringResourceVisualizer
 
             if (isSolutionLoaded)
             {
-                HandleOpenSolution();
+                await HandleOpenSolutionAsync();
             }
 
             // Listen for subsequent solution events
@@ -92,9 +93,14 @@ namespace StringResourceVisualizer
             return value is bool isSolOpen && isSolOpen;
         }
 
-        private async void HandleOpenSolution(object sender = null, EventArgs e = null)
+        private void HandleOpenSolution(object sender, EventArgs e)
         {
-            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
+            JoinableTaskFactory.RunAsync(HandleOpenSolutionAsync).Task.FileAndForget("StringResourceVisualizer");
+        }
+
+        private async Task HandleOpenSolutionAsync()
+        {
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
 
             //Use nested methods to avoid prompt (and need) for multiple MainThead checks/switches
             IEnumerable<ProjectItem> RecurseProjectItems(ProjectItems projItems)
