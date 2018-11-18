@@ -95,7 +95,7 @@ namespace StringResourceVisualizer
 
         private void HandleOpenSolution(object sender, EventArgs e)
         {
-            JoinableTaskFactory.RunAsync(() => HandleOpenSolutionAsync(CancellationToken.None)).Task.LogAndForget("StringResourceVisualizer");
+            JoinableTaskFactory.RunAsync(() => HandleOpenSolutionAsync(DisposalToken)).Task.LogAndForget("StringResourceVisualizer");
         }
 
         private async Task HandleOpenSolutionAsync(CancellationToken cancellationToken)
