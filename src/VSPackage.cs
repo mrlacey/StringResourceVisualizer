@@ -95,7 +95,7 @@ namespace StringResourceVisualizer
 
         private void HandleOpenSolution(object sender, EventArgs e)
         {
-            JoinableTaskFactory.RunAsync(HandleOpenSolutionAsync).Task.LogAndForget(GetType());
+            JoinableTaskFactory.RunAsync(HandleOpenSolutionAsync).Task.LogAndForget("StringResourceVisualizer");
         }
 
         private async Task HandleOpenSolutionAsync()
@@ -210,15 +210,11 @@ namespace StringResourceVisualizer
 
     static class TaskExtensions
     {
-        internal static void LogAndForget(this Task task, Type type)
-        {
-            task.ContinueWith(t =>
-            {
-                if (t.Exception != null)
-                {
-                    VsShellUtilities.LogError(type.FullName, t.Exception.ToString());
-                }
-            });
-        }
+        internal static void LogAndForget(this Task task, string source) =>
+            task.ContinueWith((t, s) => VsShellUtilities.LogError(s as string, t.Exception.ToString()),
+                source,
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted,
+                TaskScheduler.FromCurrentSynchronizationContext());
     }
 }
