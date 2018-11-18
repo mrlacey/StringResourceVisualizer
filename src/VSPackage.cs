@@ -159,7 +159,6 @@ namespace StringResourceVisualizer
                             // Only want neutral language ones, not locale specific versions
                             if (!System.IO.Path.GetFileNameWithoutExtension(filePath).Contains("."))
                             {
-                                Console.WriteLine(filePath);
                                 ResourceAdornmentManager.ResourceFiles.Add(filePath);
                             }
                         }
