@@ -75,7 +75,7 @@ namespace StringResourceVisualizer
 
             if (isSolutionLoaded)
             {
-                await HandleOpenSolutionAsync();
+                await HandleOpenSolutionAsync(cancellationToken);
             }
 
             // Listen for subsequent solution events
@@ -95,12 +95,12 @@ namespace StringResourceVisualizer
 
         private void HandleOpenSolution(object sender, EventArgs e)
         {
-            JoinableTaskFactory.RunAsync(HandleOpenSolutionAsync).Task.LogAndForget("StringResourceVisualizer");
+            JoinableTaskFactory.RunAsync(() => HandleOpenSolutionAsync(CancellationToken.None)).Task.LogAndForget("StringResourceVisualizer");
         }
 
-        private async Task HandleOpenSolutionAsync()
+        private async Task HandleOpenSolutionAsync(CancellationToken cancellationToken)
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
+            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
             //Use nested methods to avoid prompt (and need) for multiple MainThead checks/switches
             IEnumerable<ProjectItem> RecurseProjectItems(ProjectItems projItems)
