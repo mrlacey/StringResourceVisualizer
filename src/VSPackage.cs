@@ -214,6 +214,6 @@ namespace StringResourceVisualizer
                 source,
                 CancellationToken.None,
                 TaskContinuationOptions.OnlyOnFaulted,
-                TaskScheduler.FromCurrentSynchronizationContext());
+                VsTaskLibraryHelper.GetTaskScheduler(VsTaskRunContext.UIThreadNormalPriority));
     }
 }
