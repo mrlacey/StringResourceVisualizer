@@ -141,6 +141,8 @@ namespace StringResourceVisualizer
             {
                 foreach (var project in dte.Solution.Projects)
                 {
+                    await Task.Yield(); // Avoid blocking the [UI] thread continually if there are lots of projects in the solution.
+
                     foreach (var solFile in GetProjectFiles((Project)project))
                     {
                         if (solFile.Kind != EnvDTE.Constants.vsProjectItemKindPhysicalFile)
