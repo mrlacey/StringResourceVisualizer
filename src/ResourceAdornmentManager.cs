@@ -154,7 +154,7 @@ namespace StringResourceVisualizer
                 {
                     if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
                     {
-                        var endPos = lineText.IndexOfAny(new[] { ' ', '.', '"', '(', ')' }, lineText.IndexOf('.', matchIndex) + 1);
+                        var endPos = lineText.IndexOfAny(new[] { ' ', '.', ',' , '"', '(', ')', '}' }, lineText.IndexOf('.', matchIndex) + 1);
 
                         string foundText;
 
