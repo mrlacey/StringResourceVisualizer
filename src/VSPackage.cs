@@ -71,7 +71,7 @@ namespace StringResourceVisualizer
 
             // Since this package might not be initialized until after a solution has finished loading,
             // we need to check if a solution has already been loaded and then handle it.
-            bool isSolutionLoaded = await IsSolutionLoadedAsync();
+            bool isSolutionLoaded = await IsSolutionLoadedAsync(cancellationToken);
 
             if (isSolutionLoaded)
             {
@@ -82,9 +82,9 @@ namespace StringResourceVisualizer
             SolutionEvents.OnAfterOpenSolution += HandleOpenSolution;
         }
 
-        private async Task<bool> IsSolutionLoadedAsync()
+        private async Task<bool> IsSolutionLoadedAsync(CancellationToken cancellationToken)
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
+            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
             var solService = await GetServiceAsync(typeof(SVsSolution)) as IVsSolution;
 
