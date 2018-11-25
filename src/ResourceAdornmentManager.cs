@@ -132,7 +132,6 @@ namespace StringResourceVisualizer
         /// <summary>
         /// Scans text line for use of resource class, then adds new adornment.
         /// </summary>
-        //private async System.Threading.Tasks.Task CreateVisualsAsync(ITextViewLine line, int lineNumber)
         private void CreateVisuals(ITextViewLine line, int lineNumber, string[] searchTexts)
         {
             try
