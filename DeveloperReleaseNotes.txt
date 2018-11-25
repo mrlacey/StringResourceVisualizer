@@ -1,0 +1,16 @@
+Notes for building a release
+============================
+
+- Update CHANGELOG.md
+- Update README.md if appropriate
+- Mark the release in GitHub
+- Build the Release version, sign it, and then upload to marketplace
+
+
+After making a release
+----------------------
+
+-Increase version numbers ready for next version:
+-- In VSPackage.cs (InstalledProductRegistration attribute)
+-- In extension.vsixmanifest
+-- In AssemblyInfo.cs
