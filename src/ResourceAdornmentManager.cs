@@ -45,9 +45,11 @@ namespace StringResourceVisualizer
 
         public static List<string> ResourceFiles { get; set; }
 
-        public static int TextSize { get; set; }
+        // Initialize to the same default as VS
+        public static uint TextSize { get; set; } = 10;
 
-        public static Color TextForegroundColor { get; set; }
+        // Initialize to a reasonable value for display on light or dark themes/background  .
+        public static Color TextForegroundColor { get; set; } = Colors.Gray;
 
         // Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
         // Also use this to identify lines to pad so the textblocks can be seen

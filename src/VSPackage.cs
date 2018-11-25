@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -85,6 +86,8 @@ namespace StringResourceVisualizer
 
             // Listen for subsequent solution events
             SolutionEvents.OnAfterOpenSolution += HandleOpenSolution;
+
+            await this.LoadSystemTextSettingsAsync(cancellationToken);
         }
 
         private async Task<bool> IsSolutionLoadedAsync(CancellationToken cancellationToken)
@@ -120,44 +123,59 @@ namespace StringResourceVisualizer
                     this.SetOrUpdateListOfResxFiles(slnDir);
                 }
 
-                IVsFontAndColorStorage storage = (IVsFontAndColorStorage)VSPackage.GetGlobalService(typeof(IVsFontAndColorStorage));
-
-                var guid = new Guid("A27B4E24-A735-4d1d-B8E7-9716E1E3D8E0");
-
-                // Seem like reasonable defaults as should be visible on light & dark theme
-                int fontSize = 10;
-                Color textColor = Colors.Gray;
-
-                if (storage != null && storage.OpenCategory(ref guid, (uint)(__FCSTORAGEFLAGS.FCSF_READONLY | __FCSTORAGEFLAGS.FCSF_LOADDEFAULTS)) == Microsoft.VisualStudio.VSConstants.S_OK)
+                if (ResourceAdornmentManager.ResourceFiles.Any())
                 {
-                    LOGFONTW[] fnt = new LOGFONTW[] { new LOGFONTW() };
-                    FontInfo[] info = new FontInfo[] { new FontInfo() };
-                    storage.GetFont(fnt, info);
-
-                    fontSize = info[0].wPointSize;
+                    var plural = ResourceAdornmentManager.ResourceFiles.Count > 1 ? "s" : string.Empty;
+                    dte.StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";
                 }
-
-                if (storage != null && storage.OpenCategory(ref guid, (uint)(__FCSTORAGEFLAGS.FCSF_NOAUTOCOLORS | __FCSTORAGEFLAGS.FCSF_LOADDEFAULTS)) == Microsoft.VisualStudio.VSConstants.S_OK)
+                else
                 {
-                    var info = new ColorableItemInfo[1];
+                    dte.StatusBar.Text = $"String Resource Visualizer could not find any resource files to load.";
+                }
+            }
+        }
 
-                    // Get the color value configured for regular string display
-                    storage.GetItem("String", info);
+        private async Task LoadSystemTextSettingsAsync(CancellationToken cancellationToken)
+        {
+            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
+            IVsFontAndColorStorage storage = (IVsFontAndColorStorage)VSPackage.GetGlobalService(typeof(IVsFontAndColorStorage));
+
+            var guid = new Guid("A27B4E24-A735-4d1d-B8E7-9716E1E3D8E0");
+
+            if (storage != null && storage.OpenCategory(ref guid, (uint)(__FCSTORAGEFLAGS.FCSF_READONLY | __FCSTORAGEFLAGS.FCSF_LOADDEFAULTS)) == Microsoft.VisualStudio.VSConstants.S_OK)
+            {
+                LOGFONTW[] fnt = new LOGFONTW[] { new LOGFONTW() };
+                FontInfo[] info = new FontInfo[] { new FontInfo() };
+
+                if (storage.GetFont(fnt, info) == Microsoft.VisualStudio.VSConstants.S_OK)
+                {
+                    var fontSize = info[0].wPointSize;
+
+                    if (fontSize > 0)
+                    {
+                        ResourceAdornmentManager.TextSize = fontSize;
+                    }
+                }
+            }
+
+            if (storage != null && storage.OpenCategory(ref guid, (uint)(__FCSTORAGEFLAGS.FCSF_NOAUTOCOLORS | __FCSTORAGEFLAGS.FCSF_LOADDEFAULTS)) == Microsoft.VisualStudio.VSConstants.S_OK)
+            {
+                var info = new ColorableItemInfo[1];
+
+                // Get the color value configured for regular string display
+                if (storage.GetItem("String", info) == Microsoft.VisualStudio.VSConstants.S_OK)
+                {
                     var win32Color = (int)info[0].crForeground;
 
                     int r = win32Color & 0x000000FF;
                     int g = (win32Color & 0x0000FF00) >> 8;
                     int b = (win32Color & 0x00FF0000) >> 16;
 
-                    textColor = Color.FromRgb((byte)r, (byte)g, (byte)b);
+                    var textColor = Color.FromRgb((byte)r, (byte)g, (byte)b);
+
+                    ResourceAdornmentManager.TextForegroundColor = textColor;
                 }
-
-                ResourceAdornmentManager.TextSize = fontSize;
-                ResourceAdornmentManager.TextForegroundColor = textColor;
-
-                var plural = ResourceAdornmentManager.ResourceFiles.Count > 1 ? "s" : string.Empty;
-                dte.StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";
             }
         }
 
