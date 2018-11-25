@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -102,76 +103,24 @@ namespace StringResourceVisualizer
         {
             await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            //Use nested methods to avoid prompt (and need) for multiple MainThead checks/switches
-            IEnumerable<ProjectItem> RecurseProjectItems(ProjectItems projItems)
-            {
-                if (projItems != null)
-                {
-                    foreach (ProjectItem item in projItems)
-                    {
-                        foreach (var subItem in RecurseProjectItem(item))
-                        {
-                            yield return subItem;
-                        }
-                    }
-                }
-            }
-
-            IEnumerable<ProjectItem> RecurseProjectItem(ProjectItem item)
-            {
-                yield return item;
-                foreach (var subItem in RecurseProjectItems(item.ProjectItems))
-                {
-                    yield return subItem;
-                }
-            }
-
-            IEnumerable<ProjectItem> GetProjectFiles(Project proj)
-            {
-                foreach (ProjectItem item in RecurseProjectItems(proj.ProjectItems))
-                {
-                    yield return item;
-                }
-            }
-
             // TODO: handle res files being removed or added to a project - currently will be ignored. Issue #2
             // Get all resource files from the solution
             // Do this now, rather than in adornment manager for performance and to avoid thread issues
             if (await this.GetServiceAsync(typeof(DTE)) is DTE dte)
             {
-                foreach (var project in dte.Solution.Projects)
+                var fileName = dte.Solution.FileName;
+
+                if (!string.IsNullOrWhiteSpace(fileName) && File.Exists(fileName))
                 {
-                    await Task.Yield(); // Avoid blocking the [UI] thread continually if there are lots of projects in the solution.
-
-                    foreach (var solFile in GetProjectFiles((Project)project))
-                    {
-                        if (solFile.Kind != EnvDTE.Constants.vsProjectItemKindPhysicalFile)
-                        {
-                            // We're only interested in files
-                            continue;
-                        }
-
-                        // The index of file names from 1 to FileCount for the project item.
-                        var filePath = solFile.FileNames[1];
-                        var fileExt = System.IO.Path.GetExtension(filePath);
-
-                        // Only interested in resx files
-                        if (fileExt.Equals(".resx"))
-                        {
-                            // Only want neutral language ones, not locale specific versions
-                            if (!System.IO.Path.GetFileNameWithoutExtension(filePath).Contains("."))
-                            {
-                                ResourceAdornmentManager.ResourceFiles.Add(filePath);
-                            }
-                        }
-                    }
+                    var slnDir = Path.GetDirectoryName(fileName);
+                    this.SetOrUpdateListOfResxFiles(slnDir);
                 }
 
                 IVsFontAndColorStorage storage = (IVsFontAndColorStorage)VSPackage.GetGlobalService(typeof(IVsFontAndColorStorage));
 
                 var guid = new Guid("A27B4E24-A735-4d1d-B8E7-9716E1E3D8E0");
 
-                // Seem like reasonabel defaults as should be visible on light & dark theme
+                // Seem like reasonable defaults as should be visible on light & dark theme
                 int _fontSize = 10;
                 Color _textColor = Colors.Gray;
 
@@ -205,6 +154,22 @@ namespace StringResourceVisualizer
 
                 var plural = ResourceAdornmentManager.ResourceFiles.Count > 1 ? "s" : string.Empty;
                 dte.StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";
+            }
+        }
+
+        private void SetOrUpdateListOfResxFiles(string slnDirectory)
+        {
+            var allResxFiles = Directory.EnumerateFiles(slnDirectory, "*.resx", SearchOption.AllDirectories);
+
+            ResourceAdornmentManager.ResourceFiles.Clear();
+
+            foreach (var resxFile in allResxFiles)
+            {
+                // Only want neutral language resources, not locale specific ones
+                if (!Path.GetFileNameWithoutExtension(resxFile).Contains("."))
+                {
+                    ResourceAdornmentManager.ResourceFiles.Add(resxFile);
+                }
             }
         }
     }
