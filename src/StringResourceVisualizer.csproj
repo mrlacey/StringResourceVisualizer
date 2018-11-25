@@ -61,6 +61,7 @@
     <Compile Include="ResourceAdornmentManager.cs" />
     <Compile Include="ResourceAdornmentManagerFactory.cs" />
     <Compile Include="StringExtensions.cs" />
+    <Compile Include="TaskExtensions.cs" />
     <Compile Include="VSPackage.cs" />
   </ItemGroup>
   <ItemGroup>

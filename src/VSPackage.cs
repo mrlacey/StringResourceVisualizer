@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="ResourceAdornmentManager.cs" company="Matt Lacey">
+// Copyright (c) Matt Lacey. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -121,16 +125,16 @@ namespace StringResourceVisualizer
                 var guid = new Guid("A27B4E24-A735-4d1d-B8E7-9716E1E3D8E0");
 
                 // Seem like reasonable defaults as should be visible on light & dark theme
-                int _fontSize = 10;
-                Color _textColor = Colors.Gray;
+                int fontSize = 10;
+                Color textColor = Colors.Gray;
 
                 if (storage != null && storage.OpenCategory(ref guid, (uint)(__FCSTORAGEFLAGS.FCSF_READONLY | __FCSTORAGEFLAGS.FCSF_LOADDEFAULTS)) == Microsoft.VisualStudio.VSConstants.S_OK)
                 {
-                    LOGFONTW[] Fnt = new LOGFONTW[] { new LOGFONTW() };
-                    FontInfo[] Info = new FontInfo[] { new FontInfo() };
-                    storage.GetFont(Fnt, Info);
+                    LOGFONTW[] fnt = new LOGFONTW[] { new LOGFONTW() };
+                    FontInfo[] info = new FontInfo[] { new FontInfo() };
+                    storage.GetFont(fnt, info);
 
-                    _fontSize = Info[0].wPointSize;
+                    fontSize = info[0].wPointSize;
                 }
 
                 if (storage != null && storage.OpenCategory(ref guid, (uint)(__FCSTORAGEFLAGS.FCSF_NOAUTOCOLORS | __FCSTORAGEFLAGS.FCSF_LOADDEFAULTS)) == Microsoft.VisualStudio.VSConstants.S_OK)
@@ -146,11 +150,11 @@ namespace StringResourceVisualizer
                     int g = (win32Color & 0x0000FF00) >> 8;
                     int b = (win32Color & 0x00FF0000) >> 16;
 
-                    _textColor = Color.FromRgb((byte)r, (byte)g, (byte)b);
+                    textColor = Color.FromRgb((byte)r, (byte)g, (byte)b);
                 }
 
-                ResourceAdornmentManager.TextSize = _fontSize;
-                ResourceAdornmentManager.TextForegroundColor = _textColor;
+                ResourceAdornmentManager.TextSize = fontSize;
+                ResourceAdornmentManager.TextForegroundColor = textColor;
 
                 var plural = ResourceAdornmentManager.ResourceFiles.Count > 1 ? "s" : string.Empty;
                 dte.StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";

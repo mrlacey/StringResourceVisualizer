@@ -70,7 +70,6 @@ namespace StringResourceVisualizer
 
                             xmlDocs.Add((resourceFile, xdoc));
                         }
-
                     }
                     catch (Exception exc)
                     {
@@ -153,7 +152,7 @@ namespace StringResourceVisualizer
                 {
                     if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
                     {
-                        var endPos = lineText.IndexOfAny(new[] { ' ', '.', ',' , '"', '(', ')', '}' }, lineText.IndexOf('.', matchIndex) + 1);
+                        var endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '}' }, lineText.IndexOf('.', matchIndex) + 1);
 
                         string foundText;
 
@@ -203,7 +202,7 @@ namespace StringResourceVisualizer
                                 Foreground = brush,
                                 Text = $"\"{displayText}\"",
                                 FontSize = TextSize,
-                                Height = (TextSize * TextBlockSizeToFontScaleFactor)
+                                Height = TextSize * TextBlockSizeToFontScaleFactor
                             };
 
                             this.DisplayedTextBlocks.Add(lineNumber, tb);

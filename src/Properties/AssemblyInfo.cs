@@ -1,4 +1,8 @@
-﻿using System.Reflection;
+﻿// <copyright file="ResourceAdornmentManager.cs" company="Matt Lacey">
+// Copyright (c) Matt Lacey. All rights reserved.
+// </copyright>
+
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
