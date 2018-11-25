@@ -192,7 +192,7 @@ namespace StringResourceVisualizer
                             }
                         }
 
-                        if (!string.IsNullOrWhiteSpace(displayText))
+                        if (!string.IsNullOrWhiteSpace(displayText) && TextSize > 0)
                         {
                             var brush = new SolidColorBrush(TextForegroundColor);
                             brush.Freeze();
