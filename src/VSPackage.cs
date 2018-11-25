@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using EnvDTE;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Threading;
 using SolutionEvents = Microsoft.VisualStudio.Shell.Events.SolutionEvents;
 using Task = System.Threading.Tasks.Task;
 
@@ -70,20 +72,20 @@ namespace StringResourceVisualizer
 
             // Since this package might not be initialized until after a solution has finished loading,
             // we need to check if a solution has already been loaded and then handle it.
-            bool isSolutionLoaded = await IsSolutionLoadedAsync();
+            bool isSolutionLoaded = await IsSolutionLoadedAsync(cancellationToken);
 
             if (isSolutionLoaded)
             {
-                HandleOpenSolution();
+                await HandleOpenSolutionAsync(cancellationToken);
             }
 
             // Listen for subsequent solution events
             SolutionEvents.OnAfterOpenSolution += HandleOpenSolution;
         }
 
-        private async Task<bool> IsSolutionLoadedAsync()
+        private async Task<bool> IsSolutionLoadedAsync(CancellationToken cancellationToken)
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync();
+            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
             var solService = await GetServiceAsync(typeof(SVsSolution)) as IVsSolution;
 
@@ -92,71 +94,33 @@ namespace StringResourceVisualizer
             return value is bool isSolOpen && isSolOpen;
         }
 
-        private async void HandleOpenSolution(object sender = null, EventArgs e = null)
+        private void HandleOpenSolution(object sender, EventArgs e)
         {
-            await this.JoinableTaskFactory.SwitchToMainThreadAsync();
+            JoinableTaskFactory.RunAsync(() => HandleOpenSolutionAsync(DisposalToken)).Task.LogAndForget("StringResourceVisualizer");
+        }
 
-            //Use nested methods to avoid prompt (and need) for multiple MainThead checks/switches
-            IEnumerable<ProjectItem> RecurseProjectItems(ProjectItems projItems)
-            {
-                if (projItems != null)
-                {
-                    foreach (ProjectItem item in projItems)
-                    {
-                        foreach (var subItem in RecurseProjectItem(item))
-                        {
-                            yield return subItem;
-                        }
-                    }
-                }
-            }
-
-            IEnumerable<ProjectItem> RecurseProjectItem(ProjectItem item)
-            {
-                yield return item;
-                foreach (var subItem in RecurseProjectItems(item.ProjectItems))
-                {
-                    yield return subItem;
-                }
-            }
-
-            IEnumerable<ProjectItem> GetProjectFiles(Project proj)
-            {
-                foreach (ProjectItem item in RecurseProjectItems(proj.ProjectItems))
-                {
-                    yield return item;
-                }
-            }
+        private async Task HandleOpenSolutionAsync(CancellationToken cancellationToken)
+        {
+            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
             // TODO: handle res files being removed or added to a project - currently will be ignored. Issue #2
             // Get all resource files from the solution
             // Do this now, rather than in adornment manager for performance and to avoid thread issues
             if (await this.GetServiceAsync(typeof(DTE)) is DTE dte)
             {
-                foreach (var project in dte.Solution.Projects)
-                {
-                    foreach (var solFile in GetProjectFiles((Project)project))
-                    {
-                        var filePath = solFile.FileNames[0];
-                        var fileExt = System.IO.Path.GetExtension(filePath);
+                var fileName = dte.Solution.FileName;
 
-                        // Only interested in resx files
-                        if (fileExt.Equals(".resx"))
-                        {
-                            // Only want neutral language ones, not locale specific versions
-                            if (!System.IO.Path.GetFileNameWithoutExtension(filePath).Contains("."))
-                            {
-                                ResourceAdornmentManager.ResourceFiles.Add(filePath);
-                            }
-                        }
-                    }
+                if (!string.IsNullOrWhiteSpace(fileName) && File.Exists(fileName))
+                {
+                    var slnDir = Path.GetDirectoryName(fileName);
+                    this.SetOrUpdateListOfResxFiles(slnDir);
                 }
 
                 IVsFontAndColorStorage storage = (IVsFontAndColorStorage)VSPackage.GetGlobalService(typeof(IVsFontAndColorStorage));
 
                 var guid = new Guid("A27B4E24-A735-4d1d-B8E7-9716E1E3D8E0");
 
-                // Seem like reasonabel defaults as should be visible on light & dark theme
+                // Seem like reasonable defaults as should be visible on light & dark theme
                 int _fontSize = 10;
                 Color _textColor = Colors.Gray;
 
@@ -189,8 +153,34 @@ namespace StringResourceVisualizer
                 ResourceAdornmentManager.TextForegroundColor = _textColor;
 
                 var plural = ResourceAdornmentManager.ResourceFiles.Count > 1 ? "s" : string.Empty;
-                (await this.GetServiceAsync(typeof(DTE)) as DTE).StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";
+                dte.StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";
             }
         }
+
+        private void SetOrUpdateListOfResxFiles(string slnDirectory)
+        {
+            var allResxFiles = Directory.EnumerateFiles(slnDirectory, "*.resx", SearchOption.AllDirectories);
+
+            ResourceAdornmentManager.ResourceFiles.Clear();
+
+            foreach (var resxFile in allResxFiles)
+            {
+                // Only want neutral language resources, not locale specific ones
+                if (!Path.GetFileNameWithoutExtension(resxFile).Contains("."))
+                {
+                    ResourceAdornmentManager.ResourceFiles.Add(resxFile);
+                }
+            }
+        }
+    }
+
+    static class TaskExtensions
+    {
+        internal static void LogAndForget(this Task task, string source) =>
+            task.ContinueWith((t, s) => VsShellUtilities.LogError(s as string, t.Exception.ToString()),
+                source,
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted,
+                VsTaskLibraryHelper.GetTaskScheduler(VsTaskRunContext.UIThreadNormalPriority));
     }
 }
