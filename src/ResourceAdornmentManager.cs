@@ -47,12 +47,134 @@ namespace StringResourceVisualizer
         // Initialize to the same default as VS
         public static uint TextSize { get; set; } = 10;
 
-        // Initialize to a reasonable value for display on light or dark themes/background  .
+        // Initialize to a reasonable value for display on light or dark themes/background.
         public static Color TextForegroundColor { get; set; } = Colors.Gray;
+
+        public static FileSystemWatcher ResxWatcher { get; private set; } = new FileSystemWatcher();
 
         // Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
         // Also use this to identify lines to pad so the textblocks can be seen
         public Dictionary<int, (TextBlock textBlock, string resName)> DisplayedTextBlocks { get; set; } = new Dictionary<int, (TextBlock textBlock, string resName)>();
+
+        public static void LoadResources(List<string> resxFilesOfInterest, string slnDirectory)
+        {
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await TaskScheduler.Default;
+
+                ResourcesLoaded = false;
+
+                ResourceFiles.Clear();
+                SearchValues.Clear();
+                XmlDocs.Clear();
+
+                foreach (var resourceFile in resxFilesOfInterest)
+                {
+                    await Task.Yield();
+
+                    try
+                    {
+                        var doc = new XmlDocument();
+                        doc.Load(resourceFile);
+
+                        XmlDocs.Add((resourceFile, doc));
+                        ResourceFiles.Add(resourceFile);
+
+                        var searchTerm = $"{Path.GetFileNameWithoutExtension(resourceFile)}.";
+
+                        if (!SearchValues.Contains(searchTerm))
+                        {
+                            SearchValues.Add(searchTerm);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine(e);
+                    }
+                }
+
+                if (resxFilesOfInterest.Any())
+                {
+                    // Need to track changed and renamed events as VS doesn't do a direct overwrite but makes a temp file of the new version and then renames both files.
+                    // Changed event will also pick up changes made by extensions or programs other than VS.
+                    ResxWatcher.Filter = "*.resx";
+                    ResxWatcher.Path = slnDirectory;
+                    ResxWatcher.IncludeSubdirectories = true;
+                    ResxWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+                    ResxWatcher.Changed -= ResxWatcher_Changed;
+                    ResxWatcher.Changed += ResxWatcher_Changed;
+                    ResxWatcher.Renamed -= ResxWatcher_Renamed;
+                    ResxWatcher.Renamed += ResxWatcher_Renamed;
+                    ResxWatcher.EnableRaisingEvents = true;
+                }
+                else
+                {
+                    ResxWatcher.EnableRaisingEvents = false;
+                    ResxWatcher.Changed -= ResxWatcher_Changed;
+                    ResxWatcher.Renamed -= ResxWatcher_Renamed;
+                }
+
+                ResourcesLoaded = true;
+            });
+        }
+
+        private static async void ResxWatcher_Renamed(object sender, RenamedEventArgs e)
+        {
+            // Don't want to know about files being named from .resx to something else
+            if (e.FullPath.EndsWith(".resx"))
+            {
+                await ReloadResourceFileAsync(e.FullPath);
+            }
+        }
+
+        private static async void ResxWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            await ReloadResourceFileAsync(e.FullPath);
+        }
+
+        private static async Task ReloadResourceFileAsync(string filePath)
+        {
+            const int maxAttemptCount = 5;
+            const int baseWaitPeriod = 250;
+
+            ResourcesLoaded = false;
+
+            for (var i = 0; i < XmlDocs.Count; i++)
+            {
+                var xmlDoc = XmlDocs[i];
+
+                if (xmlDoc.path == filePath)
+                {
+                    // File may still be locked after being moved/renamed/updated
+                    // Allow for retry after delay with back-off.
+                    for (var attempted = 0; attempted < maxAttemptCount; attempted++)
+                    {
+                        try
+                        {
+                            if (attempted > 0)
+                            {
+                                await Task.Delay(attempted * baseWaitPeriod);
+                            }
+
+                            var doc = new XmlDocument();
+                            doc.Load(filePath);
+
+                            XmlDocs[i] = (xmlDoc.path, doc);
+                        }
+                        catch (Exception ex)
+                        {
+                            // If never load the changed file just stick with the previously loaded version.
+                            // Hopefully get updated version after next change.
+                            Debug.WriteLine(ex);
+                        }
+                    }
+
+                    break;
+                }
+            }
+
+            ResourcesLoaded = true;
+        }
 
         /// <summary>
         /// This is called by the TextView when closing. Events are unsubscribed here.
@@ -198,47 +320,6 @@ namespace StringResourceVisualizer
         private void UnsubscribeFromViewerEvents()
         {
             this.view.LayoutChanged -= this.LayoutChangedHandler;
-        }
-
-        public static void LoadResources(List<string> resxFilesOfInterest)
-        {
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
-            {
-                await TaskScheduler.Default;
-
-                ResourcesLoaded = false;
-
-                ResourceFiles.Clear();
-                SearchValues.Clear();
-                XmlDocs.Clear();
-
-                foreach (var resourceFile in resxFilesOfInterest)
-                {
-                    await Task.Yield();
-
-                    try
-                    {
-                        var doc = new XmlDocument();
-                        doc.Load(resourceFile);
-
-                        XmlDocs.Add((resourceFile, doc));
-                        ResourceFiles.Add(resourceFile);
-
-                        var searchTerm = $"{Path.GetFileNameWithoutExtension(resourceFile)}.";
-
-                        if (!SearchValues.Contains(searchTerm))
-                        {
-                            SearchValues.Add(searchTerm);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine(e);
-                    }
-                }
-
-                ResourcesLoaded = true;
-            });
         }
     }
 }

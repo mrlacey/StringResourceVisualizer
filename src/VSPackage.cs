@@ -183,8 +183,6 @@ namespace StringResourceVisualizer
         {
             var allResxFiles = Directory.EnumerateFiles(slnDirectory, "*.resx", SearchOption.AllDirectories);
 
-            //ResourceAdornmentManager.ResourceFiles.Clear();
-
             var resxFilesOfInterest = new List<string>();
 
             foreach (var resxFile in allResxFiles)
@@ -196,7 +194,7 @@ namespace StringResourceVisualizer
                 }
             }
 
-            ResourceAdornmentManager.LoadResources(resxFilesOfInterest);
+            ResourceAdornmentManager.LoadResources(resxFilesOfInterest, slnDirectory);
         }
     }
 }
