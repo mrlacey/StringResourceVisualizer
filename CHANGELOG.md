@@ -1,9 +1,9 @@
 # Road map
 
+- [X] Improve performance and reduce CPU usage
 - [ ] Support resource files added to the project once opened
 - [ ] Don't show adorner if usage is in a collapsed section
 - [ ] Support showing multiple resources in the same line of code
-- [ ] Allow disabling functionality without uninstalling the extension
 
 Features that have a checkmark are complete and available for
 download in the
