@@ -7,12 +7,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Xml;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
+using Microsoft.VisualStudio.Threading;
+using Task = System.Threading.Tasks.Task;
 
 namespace StringResourceVisualizer
 {
@@ -23,7 +27,6 @@ namespace StringResourceVisualizer
     {
         private readonly IAdornmentLayer layer;
         private readonly IWpfTextView view;
-        private List<(string path, XmlDocument xDoc)> xmlDocs = null;
 
         /// <summary>
         /// Initializes static members of the <see cref="ResourceAdornmentManager"/> class.
@@ -43,7 +46,13 @@ namespace StringResourceVisualizer
             this.view.LayoutChanged += this.LayoutChangedHandler;
         }
 
-        public static List<string> ResourceFiles { get; set; }
+        public static List<string> ResourceFiles { get; set; } = new List<string>();
+
+        public static List<string> SearchValues { get; set; } = new List<string>();
+
+        public static List<(string path, XmlDocument xDoc)> XmlDocs { get; private set; } = new List<(string path, XmlDocument xDoc)>();
+
+        public static bool ResourcesLoaded { get; private set; }
 
         // Initialize to the same default as VS
         public static uint TextSize { get; set; } = 10;
@@ -54,34 +63,6 @@ namespace StringResourceVisualizer
         // Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
         // Also use this to identify lines to pad so the textblocks can be seen
         public Dictionary<int, TextBlock> DisplayedTextBlocks { get; set; }
-
-        public List<(string path, XmlDocument xDoc)> XmlDocs
-        {
-            get
-            {
-                if (xmlDocs == null)
-                {
-                    try
-                    {
-                        xmlDocs = new List<(string, XmlDocument)>();
-
-                        foreach (var resourceFile in ResourceFiles)
-                        {
-                            var xdoc = new XmlDocument();
-                            xdoc.Load(resourceFile);
-
-                            xmlDocs.Add((resourceFile, xdoc));
-                        }
-                    }
-                    catch (Exception exc)
-                    {
-                        Debug.WriteLine(exc);
-                    }
-                }
-
-                return xmlDocs;
-            }
-        }
 
         /// <summary>
         /// This is called by the TextView when closing. Events are unsubscribed here.
@@ -96,24 +77,14 @@ namespace StringResourceVisualizer
         /// </summary>
         private void LayoutChangedHandler(object sender, TextViewLayoutChangedEventArgs e)
         {
-            if (ResourceFiles.Any())
+            if (ResourcesLoaded)
             {
-                // Determine text to search for (based on file names)
-                var searchTexts = new string[ResourceFiles.Count];
-
-                for (int i = 0; i < ResourceFiles.Count; i++)
-                {
-                    searchTexts[i] = $"{Path.GetFileNameWithoutExtension(ResourceFiles[i])}.";
-                }
-
-                this.ResetXmlDocs();
-
                 foreach (ITextViewLine line in this.view.TextViewLines)
                 {
                     int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
                     try
                     {
-                        this.CreateVisuals(line, lineNumber, searchTexts);
+                        this.CreateVisuals(line, lineNumber);
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -123,24 +94,17 @@ namespace StringResourceVisualizer
             }
         }
 
-        private void ResetXmlDocs()
-        {
-            // Set this to null so the resource files are re-read when next needed.
-            // This will pick up any changes that have happened.
-            this.xmlDocs = null;
-        }
-
         /// <summary>
         /// Scans text line for use of resource class, then adds new adornment.
         /// </summary>
-        private void CreateVisuals(ITextViewLine line, int lineNumber, string[] searchTexts)
+        private void CreateVisuals(ITextViewLine line, int lineNumber)
         {
             try
             {
                 string lineText = line.Extent.GetText();
 
-                // Remove any textblock displayed on this line so it won't conflict with anything we add below.
-                // Handles no textblock to show or the text to display having changed.
+                // Remove any textblocks displayed on this line so it won't conflict with anything we add below.
+                // Handles no textblocks to show or the text to display having changed.
                 if (this.DisplayedTextBlocks.ContainsKey(lineNumber))
                 {
                     this.layer.RemoveAdornment(this.DisplayedTextBlocks[lineNumber]);
@@ -148,7 +112,7 @@ namespace StringResourceVisualizer
                 }
 
                 // TODO: need to handle multiple search texts being found on a line. Issue #4
-                int matchIndex = lineText.IndexOfAny(searchTexts);
+                int matchIndex = lineText.IndexOfAny(SearchValues.ToArray());
 
                 if (matchIndex >= 0)
                 {
@@ -184,7 +148,7 @@ namespace StringResourceVisualizer
                                         if (element.GetAttribute("name") == resourceName)
                                         {
                                             var valueElement = element.GetElementsByTagName("value").Item(0);
-                                            displayText = valueElement.InnerText;
+                                            displayText = valueElement?.InnerText;
                                             break;
                                         }
                                     }
@@ -197,14 +161,14 @@ namespace StringResourceVisualizer
                             var brush = new SolidColorBrush(TextForegroundColor);
                             brush.Freeze();
 
-                            const double TextBlockSizeToFontScaleFactor = 1.4;
+                            const double textBlockSizeToFontScaleFactor = 1.4;
 
-                            TextBlock tb = new TextBlock
+                            var tb = new TextBlock
                             {
                                 Foreground = brush,
                                 Text = $"\"{displayText}\"",
                                 FontSize = TextSize,
-                                Height = TextSize * TextBlockSizeToFontScaleFactor
+                                Height = TextSize * textBlockSizeToFontScaleFactor
                             };
 
                             this.DisplayedTextBlocks.Add(lineNumber, tb);
@@ -232,6 +196,47 @@ namespace StringResourceVisualizer
         private void UnsubscribeFromViewerEvents()
         {
             this.view.LayoutChanged -= this.LayoutChangedHandler;
+        }
+
+        public static void LoadResources(List<string> resxFilesOfInterest)
+        {
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await TaskScheduler.Default;
+
+                ResourcesLoaded = false;
+
+                ResourceFiles.Clear();
+                SearchValues.Clear();
+                XmlDocs.Clear();
+
+                foreach (var resourceFile in resxFilesOfInterest)
+                {
+                    await Task.Yield();
+
+                    try
+                    {
+                        var doc = new XmlDocument();
+                        doc.Load(resourceFile);
+
+                        XmlDocs.Add((resourceFile, doc));
+                        ResourceFiles.Add(resourceFile);
+
+                        var searchTerm = $"{Path.GetFileNameWithoutExtension(resourceFile)}.";
+
+                        if (!SearchValues.Contains(searchTerm))
+                        {
+                            SearchValues.Add(searchTerm);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine(e);
+                    }
+                }
+
+                ResourcesLoaded = true;
+            });
         }
     }
 }

@@ -183,16 +183,20 @@ namespace StringResourceVisualizer
         {
             var allResxFiles = Directory.EnumerateFiles(slnDirectory, "*.resx", SearchOption.AllDirectories);
 
-            ResourceAdornmentManager.ResourceFiles.Clear();
+            //ResourceAdornmentManager.ResourceFiles.Clear();
+
+            var resxFilesOfInterest = new List<string>();
 
             foreach (var resxFile in allResxFiles)
             {
                 // Only want neutral language resources, not locale specific ones
                 if (!Path.GetFileNameWithoutExtension(resxFile).Contains("."))
                 {
-                    ResourceAdornmentManager.ResourceFiles.Add(resxFile);
+                    resxFilesOfInterest.Add(resxFile);
                 }
             }
+
+            ResourceAdornmentManager.LoadResources(resxFilesOfInterest);
         }
     }
 }
