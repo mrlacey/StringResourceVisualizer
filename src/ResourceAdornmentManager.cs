@@ -118,6 +118,14 @@ namespace StringResourceVisualizer
             });
         }
 
+        /// <summary>
+        /// This is called by the TextView when closing. Events are unsubscribed here.
+        /// </summary>
+        /// <remarks>
+        /// It's actually called twice - once by the IPropertyOwner instance, and again by the ITagger instance.
+        /// </remarks>
+        public void Dispose() => this.UnsubscribeFromViewerEvents();
+
         private static async void ResxWatcher_Renamed(object sender, RenamedEventArgs e)
         {
             // Don't want to know about files being named from .resx to something else
@@ -141,9 +149,9 @@ namespace StringResourceVisualizer
 
             for (var i = 0; i < XmlDocs.Count; i++)
             {
-                var xmlDoc = XmlDocs[i];
+                var (path, _) = XmlDocs[i];
 
-                if (xmlDoc.path == filePath)
+                if (path == filePath)
                 {
                     // File may still be locked after being moved/renamed/updated
                     // Allow for retry after delay with back-off.
@@ -159,7 +167,7 @@ namespace StringResourceVisualizer
                             var doc = new XmlDocument();
                             doc.Load(filePath);
 
-                            XmlDocs[i] = (xmlDoc.path, doc);
+                            XmlDocs[i] = (path, doc);
                         }
                         catch (Exception ex)
                         {
@@ -175,14 +183,6 @@ namespace StringResourceVisualizer
 
             ResourcesLoaded = true;
         }
-
-        /// <summary>
-        /// This is called by the TextView when closing. Events are unsubscribed here.
-        /// </summary>
-        /// <remarks>
-        /// It's actually called twice - once by the IPropertyOwner instance, and again by the ITagger instance.
-        /// </remarks>
-        public void Dispose() => this.UnsubscribeFromViewerEvents();
 
         /// <summary>
         /// On layout change add the adornment to any reformatted lines.

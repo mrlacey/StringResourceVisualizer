@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceAdornmentManager.cs" company="Matt Lacey">
+﻿// <copyright file="VSPackage.cs" company="Matt Lacey">
 // Copyright (c) Matt Lacey. All rights reserved.
 // </copyright>
 
@@ -81,24 +81,25 @@ namespace StringResourceVisualizer
 
             // Since this package might not be initialized until after a solution has finished loading,
             // we need to check if a solution has already been loaded and then handle it.
-            bool isSolutionLoaded = await IsSolutionLoadedAsync(cancellationToken);
+            bool isSolutionLoaded = await this.IsSolutionLoadedAsync(cancellationToken);
 
             if (isSolutionLoaded)
             {
-                await HandleOpenSolutionAsync(cancellationToken);
+                await this.HandleOpenSolutionAsync(cancellationToken);
             }
 
             // Listen for subsequent solution events
-            SolutionEvents.OnAfterOpenSolution += HandleOpenSolution;
+            SolutionEvents.OnAfterOpenSolution += this.HandleOpenSolution;
 
             await this.LoadSystemTextSettingsAsync(cancellationToken);
         }
 
         private async Task<bool> IsSolutionLoadedAsync(CancellationToken cancellationToken)
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            var solService = await GetServiceAsync(typeof(SVsSolution)) as IVsSolution;
+            var solService = await this.GetServiceAsync(typeof(SVsSolution)) as IVsSolution;
+            if (solService == null) throw new ArgumentNullException(nameof(solService));
 
             ErrorHandler.ThrowOnFailure(solService.GetProperty((int)__VSPROPID.VSPROPID_IsSolutionOpen, out object value));
 
@@ -107,14 +108,13 @@ namespace StringResourceVisualizer
 
         private void HandleOpenSolution(object sender, EventArgs e)
         {
-            JoinableTaskFactory.RunAsync(() => HandleOpenSolutionAsync(DisposalToken)).Task.LogAndForget("StringResourceVisualizer");
+            this.JoinableTaskFactory.RunAsync(() => this.HandleOpenSolutionAsync(this.DisposalToken)).Task.LogAndForget("StringResourceVisualizer");
         }
 
         private async Task HandleOpenSolutionAsync(CancellationToken cancellationToken)
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            // TODO: handle res files being removed or added to a project - currently will be ignored. Issue #2
             // Get all resource files from the solution
             // Do this now, rather than in adornment manager for performance and to avoid thread issues
             if (await this.GetServiceAsync(typeof(DTE)) is DTE dte)
@@ -143,26 +143,26 @@ namespace StringResourceVisualizer
 
         private void WatchForSolutionOrProjectChanges(string solutionFileName)
         {
-            SlnWatcher.Filter = Path.GetFileName(solutionFileName);
-            SlnWatcher.Path = Path.GetDirectoryName(solutionFileName);
-            SlnWatcher.IncludeSubdirectories = false;
-            SlnWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
-            SlnWatcher.Changed -= SlnWatcher_Changed;
-            SlnWatcher.Changed += SlnWatcher_Changed;
-            SlnWatcher.Renamed -= SlnWatcher_Renamed;
-            SlnWatcher.Renamed += SlnWatcher_Renamed;
-            SlnWatcher.EnableRaisingEvents = true;
+            this.SlnWatcher.Filter = Path.GetFileName(solutionFileName);
+            this.SlnWatcher.Path = Path.GetDirectoryName(solutionFileName);
+            this.SlnWatcher.IncludeSubdirectories = false;
+            this.SlnWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+            this.SlnWatcher.Changed -= this.SlnWatcher_Changed;
+            this.SlnWatcher.Changed += this.SlnWatcher_Changed;
+            this.SlnWatcher.Renamed -= this.SlnWatcher_Renamed;
+            this.SlnWatcher.Renamed += this.SlnWatcher_Renamed;
+            this.SlnWatcher.EnableRaisingEvents = true;
 
             // Get both .csproj & .vbproj
-            ProjWatcher.Filter = "*.*proj";
-            ProjWatcher.Path = Path.GetDirectoryName(solutionFileName);
-            ProjWatcher.IncludeSubdirectories = true;
-            ProjWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
-            ProjWatcher.Changed -= ProjWatcher_Changed;
-            ProjWatcher.Changed += ProjWatcher_Changed;
-            ProjWatcher.Renamed -= ProjWatcher_Renamed;
-            ProjWatcher.Renamed += ProjWatcher_Renamed;
-            ProjWatcher.EnableRaisingEvents = true;
+            this.ProjWatcher.Filter = "*.*proj";
+            this.ProjWatcher.Path = Path.GetDirectoryName(solutionFileName);
+            this.ProjWatcher.IncludeSubdirectories = true;
+            this.ProjWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+            this.ProjWatcher.Changed -= this.ProjWatcher_Changed;
+            this.ProjWatcher.Changed += this.ProjWatcher_Changed;
+            this.ProjWatcher.Renamed -= this.ProjWatcher_Renamed;
+            this.ProjWatcher.Renamed += this.ProjWatcher_Renamed;
+            this.ProjWatcher.EnableRaisingEvents = true;
         }
 
         private void SlnWatcher_Changed(object sender, FileSystemEventArgs e)
@@ -199,7 +199,7 @@ namespace StringResourceVisualizer
 
         private async Task LoadSystemTextSettingsAsync(CancellationToken cancellationToken)
         {
-            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
             IVsFontAndColorStorage storage = (IVsFontAndColorStorage)VSPackage.GetGlobalService(typeof(IVsFontAndColorStorage));
 

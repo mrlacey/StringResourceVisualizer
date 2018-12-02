@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceAdornmentManager.cs" company="Matt Lacey">
+﻿// <copyright file="TaskExtensions.cs" company="Matt Lacey">
 // Copyright (c) Matt Lacey. All rights reserved.
 // </copyright>
 
