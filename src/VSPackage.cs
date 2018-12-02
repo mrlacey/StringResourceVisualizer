@@ -62,6 +62,10 @@ namespace StringResourceVisualizer
             // initialization is the Initialize method.
         }
 
+        public FileSystemWatcher SlnWatcher { get; private set; } = new FileSystemWatcher();
+
+        public FileSystemWatcher ProjWatcher { get; private set; } = new FileSystemWatcher();
+
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
         /// where you can put all the initialization code that rely on services provided by VisualStudio.
@@ -121,6 +125,8 @@ namespace StringResourceVisualizer
                 {
                     var slnDir = Path.GetDirectoryName(fileName);
                     this.SetOrUpdateListOfResxFiles(slnDir);
+
+                    this.WatchForSolutionOrProjectChanges(fileName);
                 }
 
                 if (ResourceAdornmentManager.ResourceFiles.Any())
@@ -132,6 +138,62 @@ namespace StringResourceVisualizer
                 {
                     dte.StatusBar.Text = $"String Resource Visualizer could not find any resource files to load.";
                 }
+            }
+        }
+
+        private void WatchForSolutionOrProjectChanges(string solutionFileName)
+        {
+            SlnWatcher.Filter = Path.GetFileName(solutionFileName);
+            SlnWatcher.Path = Path.GetDirectoryName(solutionFileName);
+            SlnWatcher.IncludeSubdirectories = false;
+            SlnWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+            SlnWatcher.Changed -= SlnWatcher_Changed;
+            SlnWatcher.Changed += SlnWatcher_Changed;
+            SlnWatcher.Renamed -= SlnWatcher_Renamed;
+            SlnWatcher.Renamed += SlnWatcher_Renamed;
+            SlnWatcher.EnableRaisingEvents = true;
+
+            // Get both .csproj & .vbproj
+            ProjWatcher.Filter = "*.*proj";
+            ProjWatcher.Path = Path.GetDirectoryName(solutionFileName);
+            ProjWatcher.IncludeSubdirectories = true;
+            ProjWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+            ProjWatcher.Changed -= ProjWatcher_Changed;
+            ProjWatcher.Changed += ProjWatcher_Changed;
+            ProjWatcher.Renamed -= ProjWatcher_Renamed;
+            ProjWatcher.Renamed += ProjWatcher_Renamed;
+            ProjWatcher.EnableRaisingEvents = true;
+        }
+
+        private void SlnWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            this.SetOrUpdateListOfResxFiles(Path.GetDirectoryName(e.FullPath));
+        }
+
+        private void SlnWatcher_Renamed(object sender, RenamedEventArgs e)
+        {
+            // Don't want to know about temporary files created during save.
+            if (e.FullPath.EndsWith(".sln"))
+            {
+                this.SetOrUpdateListOfResxFiles(Path.GetDirectoryName(e.FullPath));
+            }
+        }
+
+        private void ProjWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            // Only interested in C# & VB.Net projects as that's all we visualize for.
+            if (e.FullPath.EndsWith(".csproj") || e.FullPath.EndsWith(".vbproj"))
+            {
+                this.SetOrUpdateListOfResxFiles(((FileSystemWatcher)sender).Path);
+            }
+        }
+
+        private void ProjWatcher_Renamed(object sender, RenamedEventArgs e)
+        {
+            // Only interested in C# & VB.Net projects as that's all we visualize for.
+            if (e.FullPath.EndsWith(".csproj") || e.FullPath.EndsWith(".vbproj"))
+            {
+                this.SetOrUpdateListOfResxFiles(((FileSystemWatcher)sender).Path);
             }
         }
 

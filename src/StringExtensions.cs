@@ -24,7 +24,7 @@ namespace StringResourceVisualizer
 
                 if (valuePostions.Any(v => v.Value > -1))
                 {
-                    var result = valuePostions.Select(v => v.Value).Where(v => v > -1).OrderByDescending(v => v).FirstOrDefault();
+                    var result = valuePostions.Where(v => v.Value > -1).OrderByDescending(v => v.Key.Length).FirstOrDefault().Value;
 
                     return result;
                 }

@@ -254,7 +254,6 @@ namespace StringResourceVisualizer
 
                     if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
                     {
-
                         string displayText = null;
 
                         if (ResourceFiles.Any())
