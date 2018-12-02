@@ -12,5 +12,5 @@ After making a release
 
 -Increase version numbers ready for next version:
 -- In VSPackage.cs (InstalledProductRegistration attribute)
--- In extension.vsixmanifest
+-- In source.extension.vsixmanifest
 -- In AssemblyInfo.cs
