@@ -1,7 +1,5 @@
 # Road map
 
-- [X] Improve performance and reduce CPU usage
-- [ ] Support resource files added to the project once opened
 - [ ] Don't show adorner if usage is in a collapsed section
 - [ ] Support showing multiple resources in the same line of code
 
@@ -13,6 +11,11 @@ download in the
 
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
+
+## 1.2
+
+- [x] Improve performance and reduce CPU usage
+- [x] Support resource files added to the project once opened
 
 ## 1.1
 
