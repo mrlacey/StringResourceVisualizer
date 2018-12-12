@@ -6,7 +6,7 @@ Download the extension from the [VS Marketplace](https://marketplace.visualstudi
 or get the
 [CI build](http://vsixgallery.com/extension/StringResourceVisualizer.a05f89b1-98f8-4b37-8f84-4fdebc44aa25/)
 
-------------------------------------
+-------------------------------------
 
 Visual Studio extension that shows the text of a string resource (.resx) when used inline in code.
 
