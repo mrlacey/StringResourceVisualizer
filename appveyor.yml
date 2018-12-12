@@ -13,3 +13,10 @@ build_script:
 
 after_test:
   - ps: Vsix-PushArtifacts | Vsix-PublishToGallery
+  
+skip_commits:
+  files:
+    - art/*
+    - docs/*
+    - '**/*.md'
+    
