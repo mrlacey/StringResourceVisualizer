@@ -216,6 +216,13 @@ namespace StringResourceVisualizer
             {
                 string lineText = line.Extent.GetText();
 
+                // The extent will include all of a collapsed section
+                if (lineText.Contains(Environment.NewLine))
+                {
+                    // We only want the first "line" here as that's all that can be seen on screen
+                    lineText = lineText.Substring(0, lineText.IndexOf(Environment.NewLine));
+                }
+
                 // Remove any textblocks displayed on this line so it won't conflict with anything we add below.
                 // Handles no textblocks to show or the text to display having changed.
                 if (this.DisplayedTextBlocks.ContainsKey(lineNumber))
@@ -238,7 +245,7 @@ namespace StringResourceVisualizer
                 }
                 else
                 {
-                    var endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '}' }, lineText.IndexOf('.', matchIndex) + 1);
+                    var endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '}', ';' }, lineText.IndexOf('.', matchIndex) + 1);
 
                     var foundText = endPos > matchIndex ? lineText.Substring(matchIndex, endPos - matchIndex) : lineText.Substring(matchIndex);
 
