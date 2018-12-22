@@ -245,7 +245,7 @@ namespace StringResourceVisualizer
                 }
                 else
                 {
-                    var endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '}' }, lineText.IndexOf('.', matchIndex) + 1);
+                    var endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '}', ';' }, lineText.IndexOf('.', matchIndex) + 1);
 
                     var foundText = endPos > matchIndex ? lineText.Substring(matchIndex, endPos - matchIndex) : lineText.Substring(matchIndex);
 
