@@ -24,7 +24,6 @@ namespace StringResourceVisualizer
             int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
             LineTransform lineTransform;
 
-            // TODO: Don't show if line is collapsed. Issue #3
             if (this.manager.DisplayedTextBlocks.ContainsKey(lineNumber))
             {
                 var defaultTopSpace = line.DefaultLineTransform.TopSpace;
