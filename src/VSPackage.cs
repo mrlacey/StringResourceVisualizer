@@ -98,8 +98,10 @@ namespace StringResourceVisualizer
         {
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            var solService = await this.GetServiceAsync(typeof(SVsSolution)) as IVsSolution;
-            if (solService == null) throw new ArgumentNullException(nameof(solService));
+            if (!(await this.GetServiceAsync(typeof(SVsSolution)) is IVsSolution solService))
+            {
+                throw new ArgumentNullException(nameof(solService));
+            }
 
             ErrorHandler.ThrowOnFailure(solService.GetProperty((int)__VSPROPID.VSPROPID_IsSolutionOpen, out object value));
 
