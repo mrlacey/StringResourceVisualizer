@@ -1,6 +1,7 @@
 # String Resource Visualizer
 
 [![Build status](https://ci.appveyor.com/api/projects/status/a8qsff6l76e04p06?svg=true)](https://ci.appveyor.com/project/mrlacey/stringresourcevisualizer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Download the extension from the [VS Marketplace](https://marketplace.visualstudio.com/items?itemName=MattLaceyLtd.StringResourceVisualizer)
 or get the
@@ -21,7 +22,3 @@ Check out the [contribution guidelines](CONTRIBUTING.md) if you want to contribu
 For cloning and building this project yourself, make sure to install the
 [Extensibility Tools](https://visualstudiogallery.msdn.microsoft.com/ab39a092-1343-46e2-b0f1-6a3f91155aa6)
 extension for Visual Studio which enables some features used by this project.
-
-## License
-
-[MIT](LICENSE)
