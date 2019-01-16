@@ -279,6 +279,18 @@ namespace StringResourceVisualizer
                                         {
                                             var valueElement = element.GetElementsByTagName("value").Item(0);
                                             displayText = valueElement?.InnerText;
+
+                                            if (displayText != null)
+                                            {
+                                                var returnIndex = displayText.IndexOfAny(new char[] {'\r', '\n'});
+
+                                                if (returnIndex >= 0)
+                                                {
+                                                    // Truncate at first wrapping character and add "Return Character" to indicate truncation
+                                                    displayText = displayText.Substring(0, returnIndex) + "⏎";
+                                                }
+                                            }
+
                                             break;
                                         }
                                     }
