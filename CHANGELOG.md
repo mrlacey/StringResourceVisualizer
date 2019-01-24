@@ -1,11 +1,8 @@
 # Road map
 
-- [x] Support VS 2019
-- [x] Don't show adorner if usage is in a collapsed section
-- [x] Support showing multiple resources in the same line of code
-- [x] Prevent resources overlapping if on the same line
-- [x] Truncate multi-line strings in adornment and indicate truncation/wrapping
-- [x] Use output pane for logging details, not the status bar
+- [ ] Performance improvements
+- [ ] Support for wrapped lines
+- [ ] RESW support
 - [ ] [Open to suggestions...](https://github.com/mrlacey/StringResourceVisualizer/issues/new)
 
 Features that have a checkmark are complete and available for
@@ -16,6 +13,15 @@ download in the
 
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
+
+## 1.3
+
+- [x] Support VS 2019
+- [x] Don't show adorner if usage is in a collapsed section
+- [x] Support showing multiple resources in the same line of code
+- [x] Prevent resources overlapping if on the same line
+- [x] Truncate multi-line strings in adornment and indicate truncation/wrapping
+- [x] Use output pane for logging details, not the status bar
 
 ## 1.2
 
