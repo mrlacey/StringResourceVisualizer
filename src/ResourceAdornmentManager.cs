@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Xml;
@@ -236,6 +237,11 @@ namespace StringResourceVisualizer
 
                 if (indexes.Any())
                 {
+                    var lastLeft = double.NaN;
+
+                    // Reverse the list to can go through them right-to-left so know if there's anything that might overlap
+                    indexes.Reverse();
+
                     foreach (var matchIndex in indexes)
                     {
                         var endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '}', ';' }, lineText.IndexOf('.', matchIndex) + 1);
@@ -309,8 +315,16 @@ namespace StringResourceVisualizer
                             var span = new SnapshotSpan(this.view.TextSnapshot, Span.FromBounds(start, end));
                             var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);
 
+                            if (!double.IsNaN(lastLeft))
+                            {
+                                tb.MaxWidth = lastLeft - lineGeometry.Bounds.Left - 5; // Minus 5 for padding
+                                tb.TextTrimming = TextTrimming.CharacterEllipsis;
+                            }
+
                             Canvas.SetLeft(tb, lineGeometry.Bounds.Left);
                             Canvas.SetTop(tb, line.TextTop - tb.Height);
+
+                            lastLeft = lineGeometry.Bounds.Left;
 
                             this.layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, tag: null, adornment: tb, removedCallback: null);
                         }
