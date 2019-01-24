@@ -54,8 +54,9 @@ namespace StringResourceVisualizer
 
         // Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
         // Also use this to identify lines to pad so the textblocks can be seen
-        public Dictionary<int, (TextBlock textBlock, string resName)> DisplayedTextBlocks { get; set; } = new Dictionary<int, (TextBlock textBlock, string resName)>();
+        public Dictionary<int, List<(TextBlock textBlock, string resName)>> DisplayedTextBlocks { get; set; } = new Dictionary<int, List<(TextBlock textBlock, string resName)>>();
 
+        // TODO: make this async
         public static void LoadResources(List<string> resxFilesOfInterest, string slnDirectory)
         {
             ThreadHelper.JoinableTaskFactory.Run(async () =>
@@ -220,47 +221,38 @@ namespace StringResourceVisualizer
                 if (lineText.Contains(Environment.NewLine))
                 {
                     // We only want the first "line" here as that's all that can be seen on screen
-                    lineText = lineText.Substring(0, lineText.IndexOf(Environment.NewLine));
+                    lineText = lineText.Substring(0, lineText.IndexOf(Environment.NewLine, StringComparison.InvariantCultureIgnoreCase));
                 }
 
                 // Remove any textblocks displayed on this line so it won't conflict with anything we add below.
                 // Handles no textblocks to show or the text to display having changed.
                 if (this.DisplayedTextBlocks.ContainsKey(lineNumber))
                 {
-                    this.layer.RemoveAdornment(this.DisplayedTextBlocks[lineNumber].textBlock);
+                    foreach (var (textBlock, _) in this.DisplayedTextBlocks[lineNumber])
+                    {
+                        this.layer.RemoveAdornment(textBlock);
+                    }
+
                     this.DisplayedTextBlocks.Remove(lineNumber);
                 }
 
-                // TODO: need to handle multiple search texts being found on a line. Issue #4
-                int matchIndex = lineText.IndexOfAny(SearchValues.ToArray());
+                var indexes = lineText.GetAllIndexes(SearchValues.ToArray());
 
-                if (matchIndex == -1)
+                if (indexes.Any())
                 {
-                    // Remove the TextBlock if no longer needed
-                    if (this.DisplayedTextBlocks.ContainsKey(lineNumber))
+                    foreach (var matchIndex in indexes)
                     {
-                        this.layer.RemoveAdornment(this.DisplayedTextBlocks[lineNumber].textBlock);
-                        this.DisplayedTextBlocks.Remove(lineNumber);
-                    }
-                }
-                else
-                {
-                    var endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '}', ';' }, lineText.IndexOf('.', matchIndex) + 1);
+                        var endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '}', ';' }, lineText.IndexOf('.', matchIndex) + 1);
 
-                    var foundText = endPos > matchIndex ? lineText.Substring(matchIndex, endPos - matchIndex) : lineText.Substring(matchIndex);
+                        var foundText = endPos > matchIndex
+                            ? lineText.Substring(matchIndex, endPos - matchIndex)
+                            : lineText.Substring(matchIndex);
 
-                    if (this.DisplayedTextBlocks.ContainsKey(lineNumber))
-                    {
-                        // Remove existing TextBlock as no longer matches placeholder
-                        if (foundText != this.DisplayedTextBlocks[lineNumber].resName)
+                        if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
                         {
-                            this.layer.RemoveAdornment(this.DisplayedTextBlocks[lineNumber].textBlock);
-                            this.DisplayedTextBlocks.Remove(lineNumber);
+                            this.DisplayedTextBlocks.Add(lineNumber, new List<(TextBlock textBlock, string resName)>());
                         }
-                    }
 
-                    if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
-                    {
                         string displayText = null;
 
                         if (ResourceFiles.Any())
@@ -282,7 +274,7 @@ namespace StringResourceVisualizer
 
                                             if (displayText != null)
                                             {
-                                                var returnIndex = displayText.IndexOfAny(new char[] {'\r', '\n'});
+                                                var returnIndex = displayText.IndexOfAny(new[] { '\r', '\n' });
 
                                                 if (returnIndex >= 0)
                                                 {
@@ -313,7 +305,7 @@ namespace StringResourceVisualizer
                                 Height = TextSize * textBlockSizeToFontScaleFactor
                             };
 
-                            this.DisplayedTextBlocks.Add(lineNumber, (tb, foundText));
+                            this.DisplayedTextBlocks[lineNumber].Add((tb, foundText));
 
                             // Get coordinates of text
                             int start = line.Extent.Start.Position + matchIndex;

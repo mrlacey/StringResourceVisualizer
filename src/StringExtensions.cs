@@ -14,17 +14,17 @@ namespace StringResourceVisualizer
         {
             try
             {
-                var valuePostions = new Dictionary<string, int>();
+                var valuePositions = new Dictionary<string, int>();
 
                 // Values may be duplicated if multiple apps in the project have resources with the same name.
                 foreach (var value in values.Distinct())
                 {
-                    valuePostions.Add(value, source.IndexOf(value));
+                    valuePositions.Add(value, source.IndexOf(value));
                 }
 
-                if (valuePostions.Any(v => v.Value > -1))
+                if (valuePositions.Any(v => v.Value > -1))
                 {
-                    var result = valuePostions.Where(v => v.Value > -1).OrderByDescending(v => v.Key.Length).FirstOrDefault().Value;
+                    var result = valuePositions.Where(v => v.Value > -1).OrderByDescending(v => v.Key.Length).FirstOrDefault().Value;
 
                     return result;
                 }
@@ -37,6 +37,39 @@ namespace StringResourceVisualizer
             }
 
             return -1;
+        }
+
+        public static List<int> GetAllIndexes(this string source, params string[] values)
+        {
+            var result = new List<int>();
+
+            try
+            {
+                var startPos = 0;
+
+                while (startPos > -1 && startPos <= source.Length)
+                {
+                    var index = source.Substring(startPos).IndexOfAny(values);
+
+                    if (index > -1)
+                    {
+                        result.Add(startPos + index);
+                        startPos = startPos + index + 1;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(source);
+                Console.WriteLine(values);
+                Console.WriteLine(e);
+            }
+
+            return result;
         }
     }
 }
