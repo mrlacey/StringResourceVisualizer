@@ -1,7 +1,8 @@
 # Road map
 
 - [x] Don't show adorner if usage is in a collapsed section
-- [ ] Support showing multiple resources in the same line of code
+- [x] Support showing multiple resources in the same line of code
+- [ ] Prevent resources overlapping if on the same line
 - [x] Support VS 2019
 - [x] Truncate multi-line strings in adornment and indicate truncation/wrapping
 - [ ] [Open to suggestions...](https://github.com/mrlacey/StringResourceVisualizer/issues/new)
