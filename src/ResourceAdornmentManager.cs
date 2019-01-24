@@ -12,7 +12,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Xml;
-using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
@@ -88,7 +87,10 @@ namespace StringResourceVisualizer
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine(e);
+                    await OutputPane.Instance.WriteAsync("Error loading resources");
+                    await OutputPane.Instance.WriteAsync(e.Message);
+                    await OutputPane.Instance.WriteAsync(e.Source);
+                    await OutputPane.Instance.WriteAsync(e.StackTrace);
                 }
             }
 
@@ -140,6 +142,8 @@ namespace StringResourceVisualizer
 
         private static async Task ReloadResourceFileAsync(string filePath)
         {
+            await OutputPane.Instance.WriteAsync($"(Re)loading {filePath}");
+
             const int maxAttemptCount = 5;
             const int baseWaitPeriod = 250;
 
@@ -185,7 +189,7 @@ namespace StringResourceVisualizer
         /// <summary>
         /// On layout change add the adornment to any reformatted lines.
         /// </summary>
-        private void LayoutChangedHandler(object sender, TextViewLayoutChangedEventArgs e)
+        private async void LayoutChangedHandler(object sender, TextViewLayoutChangedEventArgs e)
         {
             if (ResourcesLoaded)
             {
@@ -195,11 +199,14 @@ namespace StringResourceVisualizer
 
                     try
                     {
-                        this.CreateVisuals(line, lineNumber);
+                        await this.CreateVisualsAsync(line, lineNumber);
                     }
                     catch (InvalidOperationException ex)
                     {
-                        Debug.WriteLine(ex);
+                        await OutputPane.Instance.WriteAsync("Error handling layout changed");
+                        await OutputPane.Instance.WriteAsync(ex.Message);
+                        await OutputPane.Instance.WriteAsync(ex.Source);
+                        await OutputPane.Instance.WriteAsync(ex.StackTrace);
                     }
                 }
             }
@@ -208,7 +215,7 @@ namespace StringResourceVisualizer
         /// <summary>
         /// Scans text line for use of resource class, then adds new adornment.
         /// </summary>
-        private void CreateVisuals(ITextViewLine line, int lineNumber)
+        private async Task CreateVisualsAsync(ITextViewLine line, int lineNumber)
         {
             try
             {
@@ -233,7 +240,7 @@ namespace StringResourceVisualizer
                     this.DisplayedTextBlocks.Remove(lineNumber);
                 }
 
-                var indexes = lineText.GetAllIndexes(SearchValues.ToArray());
+                var indexes = await lineText.GetAllIndexesAsync(SearchValues.ToArray());
 
                 if (indexes.Any())
                 {
@@ -333,7 +340,10 @@ namespace StringResourceVisualizer
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex);
+                await OutputPane.Instance.WriteAsync("Error creating visuals");
+                await OutputPane.Instance.WriteAsync(ex.Message);
+                await OutputPane.Instance.WriteAsync(ex.Source);
+                await OutputPane.Instance.WriteAsync(ex.StackTrace);
             }
         }
 

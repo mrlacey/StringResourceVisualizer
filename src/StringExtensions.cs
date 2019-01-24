@@ -5,12 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace StringResourceVisualizer
 {
     public static class StringExtensions
     {
-        public static int IndexOfAny(this string source, params string[] values)
+        public static async Task<int> IndexOfAnyAsync(this string source, params string[] values)
         {
             try
             {
@@ -29,17 +30,20 @@ namespace StringResourceVisualizer
                     return result;
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine(source);
-                Console.WriteLine(values);
-                Console.WriteLine(e);
+                await OutputPane.Instance.WriteAsync("Error in IndexOfAnyAsync");
+                await OutputPane.Instance.WriteAsync(source);
+                await OutputPane.Instance.WriteAsync(string.Join("|", values));
+                await OutputPane.Instance.WriteAsync(ex.Message);
+                await OutputPane.Instance.WriteAsync(ex.Source);
+                await OutputPane.Instance.WriteAsync(ex.StackTrace);
             }
 
             return -1;
         }
 
-        public static List<int> GetAllIndexes(this string source, params string[] values)
+        public static async Task<List<int>> GetAllIndexesAsync(this string source, params string[] values)
         {
             var result = new List<int>();
 
@@ -49,7 +53,7 @@ namespace StringResourceVisualizer
 
                 while (startPos > -1 && startPos <= source.Length)
                 {
-                    var index = source.Substring(startPos).IndexOfAny(values);
+                    var index = await source.Substring(startPos).IndexOfAnyAsync(values);
 
                     if (index > -1)
                     {
@@ -62,11 +66,14 @@ namespace StringResourceVisualizer
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine(source);
-                Console.WriteLine(values);
-                Console.WriteLine(e);
+                await OutputPane.Instance.WriteAsync("Error in GetAllIndexesAsync");
+                await OutputPane.Instance.WriteAsync(source);
+                await OutputPane.Instance.WriteAsync(string.Join("|", values));
+                await OutputPane.Instance.WriteAsync(ex.Message);
+                await OutputPane.Instance.WriteAsync(ex.Source);
+                await OutputPane.Instance.WriteAsync(ex.StackTrace);
             }
 
             return result;

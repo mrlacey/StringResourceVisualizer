@@ -117,6 +117,10 @@ namespace StringResourceVisualizer
         {
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
+            await OutputPane.Instance.WriteAsync("If you have problems, or suggestions for improvement, report them at https://github.com/mrlacey/StringResourceVisualizer/issues/new ");
+            await OutputPane.Instance.WriteAsync("If you like this extension please leave a review at https://marketplace.visualstudio.com/items?itemName=MattLaceyLtd.StringResourceVisualizer#review-details ");
+            await OutputPane.Instance.WriteAsync(string.Empty);
+
             // Get all resource files from the solution
             // Do this now, rather than in adornment manager for performance and to avoid thread issues
             if (await this.GetServiceAsync(typeof(DTE)) is DTE dte)
@@ -134,11 +138,16 @@ namespace StringResourceVisualizer
                 if (ResourceAdornmentManager.ResourceFiles.Any())
                 {
                     var plural = ResourceAdornmentManager.ResourceFiles.Count > 1 ? "s" : string.Empty;
-                    dte.StatusBar.Text = $"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.";
+                    await OutputPane.Instance.WriteAsync($"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.");
+
+                    foreach (var resourceFile in ResourceAdornmentManager.ResourceFiles)
+                    {
+                        await OutputPane.Instance.WriteAsync(resourceFile);
+                    }
                 }
                 else
                 {
-                    dte.StatusBar.Text = $"String Resource Visualizer could not find any resource files to load.";
+                    await OutputPane.Instance.WriteAsync($"String Resource Visualizer could not find any resource files to load.");
                 }
             }
         }
@@ -245,6 +254,8 @@ namespace StringResourceVisualizer
 
         private async Task SetOrUpdateListOfResxFilesAsync(string slnDirectory)
         {
+            await OutputPane.Instance.WriteAsync("Reloading list of resx files.");
+
             var allResxFiles = Directory.EnumerateFiles(slnDirectory, "*.resx", SearchOption.AllDirectories);
 
             var resxFilesOfInterest = new List<string>();
