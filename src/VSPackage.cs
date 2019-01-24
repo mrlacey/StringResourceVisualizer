@@ -126,7 +126,7 @@ namespace StringResourceVisualizer
                 if (!string.IsNullOrWhiteSpace(fileName) && File.Exists(fileName))
                 {
                     var slnDir = Path.GetDirectoryName(fileName);
-                    this.SetOrUpdateListOfResxFiles(slnDir);
+                    await this.SetOrUpdateListOfResxFilesAsync(slnDir);
 
                     this.WatchForSolutionOrProjectChanges(fileName);
                 }
@@ -167,35 +167,35 @@ namespace StringResourceVisualizer
             this.ProjWatcher.EnableRaisingEvents = true;
         }
 
-        private void SlnWatcher_Changed(object sender, FileSystemEventArgs e)
+        private async void SlnWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            this.SetOrUpdateListOfResxFiles(Path.GetDirectoryName(e.FullPath));
+            await this.SetOrUpdateListOfResxFilesAsync(Path.GetDirectoryName(e.FullPath));
         }
 
-        private void SlnWatcher_Renamed(object sender, RenamedEventArgs e)
+        private async void SlnWatcher_Renamed(object sender, RenamedEventArgs e)
         {
             // Don't want to know about temporary files created during save.
             if (e.FullPath.EndsWith(".sln"))
             {
-                this.SetOrUpdateListOfResxFiles(Path.GetDirectoryName(e.FullPath));
+                await this.SetOrUpdateListOfResxFilesAsync(Path.GetDirectoryName(e.FullPath));
             }
         }
 
-        private void ProjWatcher_Changed(object sender, FileSystemEventArgs e)
+        private async void ProjWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             // Only interested in C# & VB.Net projects as that's all we visualize for.
             if (e.FullPath.EndsWith(".csproj") || e.FullPath.EndsWith(".vbproj"))
             {
-                this.SetOrUpdateListOfResxFiles(((FileSystemWatcher)sender).Path);
+                await this.SetOrUpdateListOfResxFilesAsync(((FileSystemWatcher)sender).Path);
             }
         }
 
-        private void ProjWatcher_Renamed(object sender, RenamedEventArgs e)
+        private async void ProjWatcher_Renamed(object sender, RenamedEventArgs e)
         {
             // Only interested in C# & VB.Net projects as that's all we visualize for.
             if (e.FullPath.EndsWith(".csproj") || e.FullPath.EndsWith(".vbproj"))
             {
-                this.SetOrUpdateListOfResxFiles(((FileSystemWatcher)sender).Path);
+                await this.SetOrUpdateListOfResxFilesAsync(((FileSystemWatcher)sender).Path);
             }
         }
 
@@ -243,7 +243,7 @@ namespace StringResourceVisualizer
             }
         }
 
-        private void SetOrUpdateListOfResxFiles(string slnDirectory)
+        private async Task SetOrUpdateListOfResxFilesAsync(string slnDirectory)
         {
             var allResxFiles = Directory.EnumerateFiles(slnDirectory, "*.resx", SearchOption.AllDirectories);
 
@@ -258,7 +258,7 @@ namespace StringResourceVisualizer
                 }
             }
 
-            ResourceAdornmentManager.LoadResources(resxFilesOfInterest, slnDirectory);
+            await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory);
         }
     }
 }

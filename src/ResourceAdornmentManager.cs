@@ -56,67 +56,63 @@ namespace StringResourceVisualizer
         // Also use this to identify lines to pad so the textblocks can be seen
         public Dictionary<int, List<(TextBlock textBlock, string resName)>> DisplayedTextBlocks { get; set; } = new Dictionary<int, List<(TextBlock textBlock, string resName)>>();
 
-        // TODO: make this async
-        public static void LoadResources(List<string> resxFilesOfInterest, string slnDirectory)
+        public static async Task LoadResourcesAsync(List<string> resxFilesOfInterest, string slnDirectory)
         {
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            await TaskScheduler.Default;
+
+            ResourcesLoaded = false;
+
+            ResourceFiles.Clear();
+            SearchValues.Clear();
+            XmlDocs.Clear();
+
+            foreach (var resourceFile in resxFilesOfInterest)
             {
-                await TaskScheduler.Default;
+                await Task.Yield();
 
-                ResourcesLoaded = false;
-
-                ResourceFiles.Clear();
-                SearchValues.Clear();
-                XmlDocs.Clear();
-
-                foreach (var resourceFile in resxFilesOfInterest)
+                try
                 {
-                    await Task.Yield();
+                    var doc = new XmlDocument();
+                    doc.Load(resourceFile);
 
-                    try
+                    XmlDocs.Add((resourceFile, doc));
+                    ResourceFiles.Add(resourceFile);
+
+                    var searchTerm = $"{Path.GetFileNameWithoutExtension(resourceFile)}.";
+
+                    if (!SearchValues.Contains(searchTerm))
                     {
-                        var doc = new XmlDocument();
-                        doc.Load(resourceFile);
-
-                        XmlDocs.Add((resourceFile, doc));
-                        ResourceFiles.Add(resourceFile);
-
-                        var searchTerm = $"{Path.GetFileNameWithoutExtension(resourceFile)}.";
-
-                        if (!SearchValues.Contains(searchTerm))
-                        {
-                            SearchValues.Add(searchTerm);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine(e);
+                        SearchValues.Add(searchTerm);
                     }
                 }
-
-                if (resxFilesOfInterest.Any())
+                catch (Exception e)
                 {
-                    // Need to track changed and renamed events as VS doesn't do a direct overwrite but makes a temp file of the new version and then renames both files.
-                    // Changed event will also pick up changes made by extensions or programs other than VS.
-                    ResxWatcher.Filter = "*.resx";
-                    ResxWatcher.Path = slnDirectory;
-                    ResxWatcher.IncludeSubdirectories = true;
-                    ResxWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
-                    ResxWatcher.Changed -= ResxWatcher_Changed;
-                    ResxWatcher.Changed += ResxWatcher_Changed;
-                    ResxWatcher.Renamed -= ResxWatcher_Renamed;
-                    ResxWatcher.Renamed += ResxWatcher_Renamed;
-                    ResxWatcher.EnableRaisingEvents = true;
+                    Debug.WriteLine(e);
                 }
-                else
-                {
-                    ResxWatcher.EnableRaisingEvents = false;
-                    ResxWatcher.Changed -= ResxWatcher_Changed;
-                    ResxWatcher.Renamed -= ResxWatcher_Renamed;
-                }
+            }
 
-                ResourcesLoaded = true;
-            });
+            if (resxFilesOfInterest.Any())
+            {
+                // Need to track changed and renamed events as VS doesn't do a direct overwrite but makes a temp file of the new version and then renames both files.
+                // Changed event will also pick up changes made by extensions or programs other than VS.
+                ResxWatcher.Filter = "*.resx";
+                ResxWatcher.Path = slnDirectory;
+                ResxWatcher.IncludeSubdirectories = true;
+                ResxWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+                ResxWatcher.Changed -= ResxWatcher_Changed;
+                ResxWatcher.Changed += ResxWatcher_Changed;
+                ResxWatcher.Renamed -= ResxWatcher_Renamed;
+                ResxWatcher.Renamed += ResxWatcher_Renamed;
+                ResxWatcher.EnableRaisingEvents = true;
+            }
+            else
+            {
+                ResxWatcher.EnableRaisingEvents = false;
+                ResxWatcher.Changed -= ResxWatcher_Changed;
+                ResxWatcher.Renamed -= ResxWatcher_Renamed;
+            }
+
+            ResourcesLoaded = true;
         }
 
         /// <summary>
