@@ -27,6 +27,7 @@ namespace StringResourceVisualizer
     {
         private readonly IAdornmentLayer layer;
         private readonly IWpfTextView view;
+        private bool hasDoneInitialCreateVisualsPass = false;
 
         public ResourceAdornmentManager(IWpfTextView view)
         {
@@ -193,7 +194,9 @@ namespace StringResourceVisualizer
         {
             if (ResourcesLoaded)
             {
-                foreach (ITextViewLine line in this.view.TextViewLines)
+                var collection = hasDoneInitialCreateVisualsPass ? (IEnumerable<ITextViewLine>)e.NewOrReformattedLines : this.view.TextViewLines;
+
+                foreach (ITextViewLine line in collection)
                 {
                     int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
 
@@ -208,6 +211,8 @@ namespace StringResourceVisualizer
                         await OutputPane.Instance.WriteAsync(ex.Source);
                         await OutputPane.Instance.WriteAsync(ex.StackTrace);
                     }
+
+                    this.hasDoneInitialCreateVisualsPass = true;
                 }
             }
         }
