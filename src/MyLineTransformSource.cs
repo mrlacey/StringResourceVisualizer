@@ -24,7 +24,8 @@ namespace StringResourceVisualizer
             int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
             LineTransform lineTransform;
 
-            if (this.manager.DisplayedTextBlocks.ContainsKey(lineNumber))
+            if (this.manager.DisplayedTextBlocks.ContainsKey(lineNumber)
+             && this.manager.DisplayedTextBlocks[lineNumber].Count > 0)
             {
                 var defaultTopSpace = line.DefaultLineTransform.TopSpace;
                 var defaultBottomSpace = line.DefaultLineTransform.BottomSpace;
