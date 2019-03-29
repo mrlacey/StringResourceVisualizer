@@ -14,6 +14,12 @@ download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.4
+
+- [x] Only pad between lines when definitely something to show
+- [x] Internal optimization of referenced resources
+
+
 ## 1.3
 
 - [x] Support VS 2019
