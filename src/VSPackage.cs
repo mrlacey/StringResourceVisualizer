@@ -141,6 +141,20 @@ namespace StringResourceVisualizer
                     var slnDir = Path.GetDirectoryName(fileName);
                     await this.SetOrUpdateListOfResxFilesAsync(slnDir);
 
+#pragma warning disable VSTHRD101 // Avoid unsupported async delegates
+                    Messenger.ReloadResources += async () => {
+                        try
+                        {
+                            await this.SetOrUpdateListOfResxFilesAsync(slnDir);
+                        }
+                        catch (Exception exc)
+                        {
+                            await OutputPane.Instance.WriteAsync("Unexpected error when reloading resources.");
+                            await OutputPane.Instance.WriteAsync(exc.Message);
+                        }
+                    };
+#pragma warning restore VSTHRD101 // Avoid unsupported async delegates
+
                     this.WatchForSolutionOrProjectChanges(fileName);
                 }
 
@@ -269,6 +283,8 @@ namespace StringResourceVisualizer
 
             var resxFilesOfInterest = new List<string>();
 
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(CancellationToken.None);
+
             var preferredCulture = Options.PreferredCulture;
 
             foreach (var resxFile in allResxFiles)
@@ -289,6 +305,19 @@ namespace StringResourceVisualizer
             }
 
             await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory, preferredCulture);
+        }
+    }
+
+    public static class Messenger
+    {
+        public delegate void ReloadResourcesEventHandler();
+
+        public static event ReloadResourcesEventHandler ReloadResources;
+
+        public static void RequestReloadResources()
+        {
+            System.Diagnostics.Debug.WriteLine("RequestReloadResources");
+            ReloadResources?.Invoke();
         }
     }
 }
