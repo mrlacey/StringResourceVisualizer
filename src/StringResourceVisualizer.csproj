@@ -84,6 +84,9 @@
     <PackageReference Include="Madskristensen.VisualStudio.SDK">
       <Version>15.8.81-pre</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers">
+      <Version>16.3.14</Version>
+    </PackageReference>
     <PackageReference Include="System.Text.Encoding">
       <Version>4.3.0</Version>
     </PackageReference>
