@@ -42,6 +42,7 @@ namespace StringResourceVisualizer
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.4")] // Info on this package for Help/About
+    [ProvideOptionPage(typeof(OptionsGrid), "String Resource Visualizer", "General", 0, 0, true)]
     [Guid(VSPackage.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class VSPackage : AsyncPackage
@@ -60,6 +61,14 @@ namespace StringResourceVisualizer
             // any Visual Studio service because at this point the package object is created but
             // not sited yet inside Visual Studio environment. The place to do all the other
             // initialization is the Initialize method.
+        }
+
+        public OptionsGrid Options
+        {
+            get
+            {
+                return (OptionsGrid)this.GetDialogPage(typeof(OptionsGrid));
+            }
         }
 
         public FileSystemWatcher SlnWatcher { get; private set; } = new FileSystemWatcher();
@@ -260,16 +269,26 @@ namespace StringResourceVisualizer
 
             var resxFilesOfInterest = new List<string>();
 
+            var preferredCulture = Options.PreferredCulture;
+
             foreach (var resxFile in allResxFiles)
             {
-                // Only want neutral language resources, not locale specific ones
                 if (!Path.GetFileNameWithoutExtension(resxFile).Contains("."))
                 {
+                    // Neutral language resources, not locale specific ones
                     resxFilesOfInterest.Add(resxFile);
+                }
+                else if (!string.IsNullOrWhiteSpace(preferredCulture))
+                {
+                    // Locale specific resource if specified
+                    if (Path.GetFileNameWithoutExtension(resxFile).EndsWith($".{preferredCulture}", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        resxFilesOfInterest.Add(resxFile);
+                    }
                 }
             }
 
-            await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory);
+            await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory, preferredCulture);
         }
     }
 }

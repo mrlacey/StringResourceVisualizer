@@ -57,7 +57,9 @@ namespace StringResourceVisualizer
         // Also use this to identify lines to pad so the textblocks can be seen
         public Dictionary<int, List<(TextBlock textBlock, string resName)>> DisplayedTextBlocks { get; set; } = new Dictionary<int, List<(TextBlock textBlock, string resName)>>();
 
-        public static async Task LoadResourcesAsync(List<string> resxFilesOfInterest, string slnDirectory)
+        public static string PreferredCulture { get; private set; }
+
+        public static async Task LoadResourcesAsync(List<string> resxFilesOfInterest, string slnDirectory, string preferredCulture)
         {
             await TaskScheduler.Default;
 
@@ -66,6 +68,9 @@ namespace StringResourceVisualizer
             ResourceFiles.Clear();
             SearchValues.Clear();
             XmlDocs.Clear();
+
+            // Store this as will need it when looking up which text to use in the adornment.
+            PreferredCulture = preferredCulture;
 
             foreach (var resourceFile in resxFilesOfInterest)
             {
@@ -80,6 +85,12 @@ namespace StringResourceVisualizer
                     ResourceFiles.Add(resourceFile);
 
                     var searchTerm = $"{Path.GetFileNameWithoutExtension(resourceFile)}.";
+
+                    if (!string.IsNullOrWhiteSpace(preferredCulture)
+                     && searchTerm.EndsWith($"{preferredCulture}.", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        searchTerm = searchTerm.Substring(0, searchTerm.Length - preferredCulture.Length - 1);
+                    }
 
                     if (!SearchValues.Contains(searchTerm))
                     {
@@ -272,34 +283,40 @@ namespace StringResourceVisualizer
                         if (ResourceFiles.Any())
                         {
                             var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
+                            var fileBaseName = foundText.Substring(0, foundText.IndexOf('.'));
 
-                            foreach (var (path, xDoc) in XmlDocs)
+                            var doubleBreak = false;
+
+                            foreach (var (path, xDoc) in GetDocsOfInterest(fileBaseName, XmlDocs, PreferredCulture))
                             {
-                                // As may be multiple resource files, only check the ones which have the correct name.
-                                // If multiple projects in the solutions with same resource name (file & name), but different res value, the wrong value *may* be displayed
-                                if (foundText.StartsWith($"{Path.GetFileNameWithoutExtension(path)}."))
+                                foreach (XmlElement element in xDoc.GetElementsByTagName("data"))
                                 {
-                                    foreach (XmlElement element in xDoc.GetElementsByTagName("data"))
+                                    if (element.GetAttribute("name") == resourceName)
                                     {
-                                        if (element.GetAttribute("name") == resourceName)
+                                        var valueElement = element.GetElementsByTagName("value").Item(0);
+                                        displayText = valueElement?.InnerText;
+
+                                        if (displayText != null)
                                         {
-                                            var valueElement = element.GetElementsByTagName("value").Item(0);
-                                            displayText = valueElement?.InnerText;
+                                            var returnIndex = displayText.IndexOfAny(new[] { '\r', '\n' });
 
-                                            if (displayText != null)
+                                            if (returnIndex >= 0)
                                             {
-                                                var returnIndex = displayText.IndexOfAny(new[] { '\r', '\n' });
-
-                                                if (returnIndex >= 0)
-                                                {
-                                                    // Truncate at first wrapping character and add "Return Character" to indicate truncation
-                                                    displayText = displayText.Substring(0, returnIndex) + "⏎";
-                                                }
+                                                // Truncate at first wrapping character and add "Return Character" to indicate truncation
+                                                displayText = displayText.Substring(0, returnIndex) + "⏎";
                                             }
-
-                                            break;
                                         }
+
+                                        // Not only have we found the value we want,
+                                        // we also don't want to check any more files.
+                                        doubleBreak = true;
+                                        break;
                                     }
+                                }
+                                
+                                if (doubleBreak)
+                                {
+                                    break;
                                 }
                             }
                         }
@@ -349,6 +366,28 @@ namespace StringResourceVisualizer
                 await OutputPane.Instance.WriteAsync(ex.Message);
                 await OutputPane.Instance.WriteAsync(ex.Source);
                 await OutputPane.Instance.WriteAsync(ex.StackTrace);
+            }
+        }
+
+        private IEnumerable<(string path, XmlDocument xDoc)> GetDocsOfInterest(string resourceBaseName, List<(string path, XmlDocument xDoc)> xmlDocs, string preferredCulture)
+        {
+            // As may be multiple resource files, only check the ones which have the correct name.
+            // If multiple projects in the solutions with same resource name (file & name), but different res value, the wrong value *may* be displayed
+            // Get preferred cutlure files first
+            if (!string.IsNullOrWhiteSpace(preferredCulture))
+            {
+                var cultureDocs = xmlDocs.Where(x => Path.GetFileNameWithoutExtension(x.path).Equals($"{resourceBaseName}.{preferredCulture}", StringComparison.InvariantCultureIgnoreCase));
+                foreach (var item in cultureDocs)
+                {
+                    yield return item;
+                }
+            }
+
+            // Then default resource files
+            var defaultResources = xmlDocs.Where(x => Path.GetFileNameWithoutExtension(x.path).Equals(resourceBaseName));
+            foreach (var item in defaultResources)
+            {
+                yield return item;
             }
         }
 
