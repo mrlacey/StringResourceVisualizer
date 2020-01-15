@@ -14,6 +14,11 @@ download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.5
+
+- [x] Allow speccifying a 'preferred culture' to use when looking up strings to display.
+- [x] Small perf improvements.
+
 ## 1.4
 
 - [x] Only pad between lines when definitely something to show
