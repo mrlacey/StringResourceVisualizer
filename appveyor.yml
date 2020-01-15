@@ -19,4 +19,3 @@ skip_commits:
     - art/*
     - docs/*
     - '**/*.md'
-    
