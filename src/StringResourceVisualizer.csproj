@@ -44,6 +44,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>StringResourceVisualizer.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -52,9 +53,11 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>StringResourceVisualizer.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Messenger.cs" />
     <Compile Include="MyLineTransformSource.cs" />
     <Compile Include="MyLineTransformSourceProvider.cs" />
     <Compile Include="OptionsGrid.cs">
@@ -76,6 +79,8 @@
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
+    <None Include="StringResourceVisualizer.ruleset" />
+    <AdditionalFiles Include="stylecop.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\Icon.png">
@@ -89,6 +94,11 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers">
       <Version>16.3.14</Version>
+    </PackageReference>
+    <PackageReference Include="StyleCop.Analyzers">
+      <Version>1.1.118</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.Text.Encoding">
       <Version>4.3.0</Version>

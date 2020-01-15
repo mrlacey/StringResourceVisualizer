@@ -12,7 +12,8 @@ namespace StringResourceVisualizer
     internal static class TaskExtensions
     {
         internal static void LogAndForget(this Task task, string source) =>
-            task.ContinueWith((t, s) => VsShellUtilities.LogError(s as string, t.Exception.ToString()),
+            task.ContinueWith(
+                (t, s) => VsShellUtilities.LogError(s as string, t.Exception.ToString()),
                 source,
                 CancellationToken.None,
                 TaskContinuationOptions.OnlyOnFaulted,

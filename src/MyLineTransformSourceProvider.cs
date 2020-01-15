@@ -10,7 +10,9 @@ using Microsoft.VisualStudio.Utilities;
 namespace StringResourceVisualizer
 {
     [Export(typeof(ILineTransformSourceProvider))]
+#pragma warning disable SA1133 // Do not combine attributes
     [ContentType("CSharp"), ContentType("Basic")]
+#pragma warning restore SA1133 // Do not combine attributes
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal class MyLineTransformSourceProvider : ILineTransformSourceProvider
     {

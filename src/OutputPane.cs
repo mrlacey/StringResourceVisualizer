@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright file="OutputPane.cs" company="Matt Lacey">
+// Copyright (c) Matt Lacey. All rights reserved.
+// </copyright>
+
+using System;
 using System.Threading;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;

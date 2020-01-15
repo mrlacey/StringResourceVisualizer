@@ -53,11 +53,11 @@ namespace StringResourceVisualizer
 
         public static FileSystemWatcher ResxWatcher { get; private set; } = new FileSystemWatcher();
 
+        public static string PreferredCulture { get; private set; }
+
         // Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
         // Also use this to identify lines to pad so the textblocks can be seen
         public Dictionary<int, List<(TextBlock textBlock, string resName)>> DisplayedTextBlocks { get; set; } = new Dictionary<int, List<(TextBlock textBlock, string resName)>>();
-
-        public static string PreferredCulture { get; private set; }
 
         public static async Task LoadResourcesAsync(List<string> resxFilesOfInterest, string slnDirectory, string preferredCulture)
         {
@@ -205,7 +205,7 @@ namespace StringResourceVisualizer
         {
             if (ResourcesLoaded)
             {
-                var collection = hasDoneInitialCreateVisualsPass ? (IEnumerable<ITextViewLine>)e.NewOrReformattedLines : this.view.TextViewLines;
+                var collection = this.hasDoneInitialCreateVisualsPass ? (IEnumerable<ITextViewLine>)e.NewOrReformattedLines : this.view.TextViewLines;
 
                 foreach (ITextViewLine line in collection)
                 {
@@ -287,7 +287,7 @@ namespace StringResourceVisualizer
 
                             var doubleBreak = false;
 
-                            foreach (var (path, xDoc) in GetDocsOfInterest(fileBaseName, XmlDocs, PreferredCulture))
+                            foreach (var (path, xDoc) in this.GetDocsOfInterest(fileBaseName, XmlDocs, PreferredCulture))
                             {
                                 foreach (XmlElement element in xDoc.GetElementsByTagName("data"))
                                 {
@@ -313,7 +313,7 @@ namespace StringResourceVisualizer
                                         break;
                                     }
                                 }
-                                
+
                                 if (doubleBreak)
                                 {
                                     break;
@@ -333,7 +333,7 @@ namespace StringResourceVisualizer
                                 Foreground = brush,
                                 Text = $"\"{displayText}\"",
                                 FontSize = TextSize,
-                                Height = TextSize * textBlockSizeToFontScaleFactor
+                                Height = TextSize * textBlockSizeToFontScaleFactor,
                             };
 
                             this.DisplayedTextBlocks[lineNumber].Add((tb, foundText));

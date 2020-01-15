@@ -142,7 +142,8 @@ namespace StringResourceVisualizer
                     await this.SetOrUpdateListOfResxFilesAsync(slnDir);
 
 #pragma warning disable VSTHRD101 // Avoid unsupported async delegates
-                    Messenger.ReloadResources += async () => {
+                    Messenger.ReloadResources += async () =>
+                    {
                         try
                         {
                             await this.SetOrUpdateListOfResxFilesAsync(slnDir);
@@ -241,8 +242,10 @@ namespace StringResourceVisualizer
 
             if (storage != null && storage.OpenCategory(ref guid, (uint)(__FCSTORAGEFLAGS.FCSF_READONLY | __FCSTORAGEFLAGS.FCSF_LOADDEFAULTS)) == Microsoft.VisualStudio.VSConstants.S_OK)
             {
+#pragma warning disable SA1129 // Do not use default value type constructor
                 LOGFONTW[] fnt = new LOGFONTW[] { new LOGFONTW() };
                 FontInfo[] info = new FontInfo[] { new FontInfo() };
+#pragma warning restore SA1129 // Do not use default value type constructor
 
                 if (storage.GetFont(fnt, info) == Microsoft.VisualStudio.VSConstants.S_OK)
                 {
@@ -285,7 +288,7 @@ namespace StringResourceVisualizer
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(CancellationToken.None);
 
-            var preferredCulture = Options.PreferredCulture;
+            var preferredCulture = this.Options.PreferredCulture;
 
             foreach (var resxFile in allResxFiles)
             {
@@ -305,19 +308,6 @@ namespace StringResourceVisualizer
             }
 
             await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory, preferredCulture);
-        }
-    }
-
-    public static class Messenger
-    {
-        public delegate void ReloadResourcesEventHandler();
-
-        public static event ReloadResourcesEventHandler ReloadResources;
-
-        public static void RequestReloadResources()
-        {
-            System.Diagnostics.Debug.WriteLine("RequestReloadResources");
-            ReloadResources?.Invoke();
         }
     }
 }
