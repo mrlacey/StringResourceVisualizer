@@ -16,7 +16,7 @@ on the official Visual Studio extension gallery.
 
 ## 1.5
 
-- [x] Allow speccifying a 'preferred culture' to use when looking up strings to display.
+- [x] Allow specifying a 'preferred culture' to use when looking up strings to display.
 - [x] Small perf improvements.
 
 ## 1.4
