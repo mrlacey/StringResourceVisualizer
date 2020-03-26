@@ -99,10 +99,10 @@ namespace StringResourceVisualizer
                 }
                 catch (Exception e)
                 {
-                    await OutputPane.Instance.WriteAsync("Error loading resources");
-                    await OutputPane.Instance.WriteAsync(e.Message);
-                    await OutputPane.Instance.WriteAsync(e.Source);
-                    await OutputPane.Instance.WriteAsync(e.StackTrace);
+                    await OutputPane.Instance?.WriteAsync("Error loading resources");
+                    await OutputPane.Instance?.WriteAsync(e.Message);
+                    await OutputPane.Instance?.WriteAsync(e.Source);
+                    await OutputPane.Instance?.WriteAsync(e.StackTrace);
                 }
             }
 
@@ -154,7 +154,7 @@ namespace StringResourceVisualizer
 
         private static async Task ReloadResourceFileAsync(string filePath)
         {
-            await OutputPane.Instance.WriteAsync($"(Re)loading {filePath}");
+            await OutputPane.Instance?.WriteAsync($"(Re)loading {filePath}");
 
             const int maxAttemptCount = 5;
             const int baseWaitPeriod = 250;
@@ -217,10 +217,10 @@ namespace StringResourceVisualizer
                     }
                     catch (InvalidOperationException ex)
                     {
-                        await OutputPane.Instance.WriteAsync("Error handling layout changed");
-                        await OutputPane.Instance.WriteAsync(ex.Message);
-                        await OutputPane.Instance.WriteAsync(ex.Source);
-                        await OutputPane.Instance.WriteAsync(ex.StackTrace);
+                        await OutputPane.Instance?.WriteAsync("Error handling layout changed");
+                        await OutputPane.Instance?.WriteAsync(ex.Message);
+                        await OutputPane.Instance?.WriteAsync(ex.Source);
+                        await OutputPane.Instance?.WriteAsync(ex.StackTrace);
                     }
 
                     this.hasDoneInitialCreateVisualsPass = true;
@@ -362,10 +362,10 @@ namespace StringResourceVisualizer
             }
             catch (Exception ex)
             {
-                await OutputPane.Instance.WriteAsync("Error creating visuals");
-                await OutputPane.Instance.WriteAsync(ex.Message);
-                await OutputPane.Instance.WriteAsync(ex.Source);
-                await OutputPane.Instance.WriteAsync(ex.StackTrace);
+                await OutputPane.Instance?.WriteAsync("Error creating visuals");
+                await OutputPane.Instance?.WriteAsync(ex.Message);
+                await OutputPane.Instance?.WriteAsync(ex.Source);
+                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
             }
         }
 

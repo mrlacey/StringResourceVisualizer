@@ -32,12 +32,12 @@ namespace StringResourceVisualizer
             }
             catch (Exception ex)
             {
-                await OutputPane.Instance.WriteAsync("Error in IndexOfAnyAsync");
-                await OutputPane.Instance.WriteAsync(source);
-                await OutputPane.Instance.WriteAsync(string.Join("|", values));
-                await OutputPane.Instance.WriteAsync(ex.Message);
-                await OutputPane.Instance.WriteAsync(ex.Source);
-                await OutputPane.Instance.WriteAsync(ex.StackTrace);
+                await OutputPane.Instance?.WriteAsync("Error in IndexOfAnyAsync");
+                await OutputPane.Instance?.WriteAsync(source);
+                await OutputPane.Instance?.WriteAsync(string.Join("|", values));
+                await OutputPane.Instance?.WriteAsync(ex.Message);
+                await OutputPane.Instance?.WriteAsync(ex.Source);
+                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
             }
 
             return -1;
@@ -68,12 +68,12 @@ namespace StringResourceVisualizer
             }
             catch (Exception ex)
             {
-                await OutputPane.Instance.WriteAsync("Error in GetAllIndexesAsync");
-                await OutputPane.Instance.WriteAsync(source);
-                await OutputPane.Instance.WriteAsync(string.Join("|", values));
-                await OutputPane.Instance.WriteAsync(ex.Message);
-                await OutputPane.Instance.WriteAsync(ex.Source);
-                await OutputPane.Instance.WriteAsync(ex.StackTrace);
+                await OutputPane.Instance?.WriteAsync("Error in GetAllIndexesAsync");
+                await OutputPane.Instance?.WriteAsync(source);
+                await OutputPane.Instance?.WriteAsync(string.Join("|", values));
+                await OutputPane.Instance?.WriteAsync(ex.Message);
+                await OutputPane.Instance?.WriteAsync(ex.Source);
+                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
             }
 
             return result;
