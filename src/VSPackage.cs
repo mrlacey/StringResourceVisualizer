@@ -126,32 +126,46 @@ namespace StringResourceVisualizer
         {
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            await OutputPane.Instance.WriteAsync("If you have problems, or suggestions for improvement, report them at https://github.com/mrlacey/StringResourceVisualizer/issues/new ");
-            await OutputPane.Instance.WriteAsync("If you like this extension please leave a review at https://marketplace.visualstudio.com/items?itemName=MattLaceyLtd.StringResourceVisualizer#review-details ");
-            await OutputPane.Instance.WriteAsync(string.Empty);
+            await OutputPane.Instance?.WriteAsync("If you have problems, or suggestions for improvement, report them at https://github.com/mrlacey/StringResourceVisualizer/issues/new ");
+            await OutputPane.Instance?.WriteAsync("If you like this extension please leave a review at https://marketplace.visualstudio.com/items?itemName=MattLaceyLtd.StringResourceVisualizer#review-details ");
+            await OutputPane.Instance?.WriteAsync(string.Empty);
 
             // Get all resource files from the solution
             // Do this now, rather than in adornment manager for performance and to avoid thread issues
             if (await this.GetServiceAsync(typeof(DTE)) is DTE dte)
             {
                 var fileName = dte.Solution.FileName;
+                string rootDir = null;
 
                 if (!string.IsNullOrWhiteSpace(fileName) && File.Exists(fileName))
                 {
-                    var slnDir = Path.GetDirectoryName(fileName);
-                    await this.SetOrUpdateListOfResxFilesAsync(slnDir);
+                    rootDir = Path.GetDirectoryName(fileName);
+                }
 
+                if (string.IsNullOrWhiteSpace(rootDir))
+                {
+                    await OutputPane.Instance?.WriteAsync("No solution file found so attempting to load resources for project file only.");
+
+                    fileName = ((dte.ActiveSolutionProjects as Array).GetValue(0) as EnvDTE.Project).FileName;
+
+                    rootDir = Path.GetDirectoryName(fileName);
+                }
+
+                if (!string.IsNullOrWhiteSpace(rootDir) && Directory.Exists(rootDir))
+                {
+                    await this.SetOrUpdateListOfResxFilesAsync(rootDir);
 #pragma warning disable VSTHRD101 // Avoid unsupported async delegates
                     Messenger.ReloadResources += async () =>
                     {
                         try
                         {
-                            await this.SetOrUpdateListOfResxFilesAsync(slnDir);
+                            await this.SetOrUpdateListOfResxFilesAsync(rootDir);
                         }
                         catch (Exception exc)
                         {
-                            await OutputPane.Instance.WriteAsync("Unexpected error when reloading resources.");
-                            await OutputPane.Instance.WriteAsync(exc.Message);
+                            await OutputPane.Instance?.WriteAsync("Unexpected error when reloading resources.");
+                            await OutputPane.Instance?.WriteAsync(exc.Message);
+                            await OutputPane.Instance?.WriteAsync(exc.StackTrace);
                         }
                     };
 #pragma warning restore VSTHRD101 // Avoid unsupported async delegates
@@ -162,31 +176,35 @@ namespace StringResourceVisualizer
                 if (ResourceAdornmentManager.ResourceFiles.Any())
                 {
                     var plural = ResourceAdornmentManager.ResourceFiles.Count > 1 ? "s" : string.Empty;
-                    await OutputPane.Instance.WriteAsync($"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.");
+                    await OutputPane.Instance?.WriteAsync($"String Resource Visualizer initialized with {ResourceAdornmentManager.ResourceFiles.Count} resource file{plural}.");
 
                     foreach (var resourceFile in ResourceAdornmentManager.ResourceFiles)
                     {
-                        await OutputPane.Instance.WriteAsync(resourceFile);
+                        await OutputPane.Instance?.WriteAsync(resourceFile);
                     }
                 }
                 else
                 {
-                    await OutputPane.Instance.WriteAsync($"String Resource Visualizer could not find any resource files to load.");
+                    await OutputPane.Instance?.WriteAsync("String Resource Visualizer could not find any resource files to load.");
                 }
             }
         }
 
         private void WatchForSolutionOrProjectChanges(string solutionFileName)
         {
-            this.SlnWatcher.Filter = Path.GetFileName(solutionFileName);
-            this.SlnWatcher.Path = Path.GetDirectoryName(solutionFileName);
-            this.SlnWatcher.IncludeSubdirectories = false;
-            this.SlnWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
-            this.SlnWatcher.Changed -= this.SlnWatcher_Changed;
-            this.SlnWatcher.Changed += this.SlnWatcher_Changed;
-            this.SlnWatcher.Renamed -= this.SlnWatcher_Renamed;
-            this.SlnWatcher.Renamed += this.SlnWatcher_Renamed;
-            this.SlnWatcher.EnableRaisingEvents = true;
+            // It might actually be the project file name if no solution file exists
+            if (solutionFileName.EndsWith(".sln", StringComparison.InvariantCultureIgnoreCase))
+            {
+                this.SlnWatcher.Filter = Path.GetFileName(solutionFileName);
+                this.SlnWatcher.Path = Path.GetDirectoryName(solutionFileName);
+                this.SlnWatcher.IncludeSubdirectories = false;
+                this.SlnWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+                this.SlnWatcher.Changed -= this.SlnWatcher_Changed;
+                this.SlnWatcher.Changed += this.SlnWatcher_Changed;
+                this.SlnWatcher.Renamed -= this.SlnWatcher_Renamed;
+                this.SlnWatcher.Renamed += this.SlnWatcher_Renamed;
+                this.SlnWatcher.EnableRaisingEvents = true;
+            }
 
             // Get both .csproj & .vbproj
             this.ProjWatcher.Filter = "*.*proj";
@@ -280,7 +298,7 @@ namespace StringResourceVisualizer
 
         private async Task SetOrUpdateListOfResxFilesAsync(string slnDirectory)
         {
-            await OutputPane.Instance.WriteAsync("Reloading list of resx files.");
+            await OutputPane.Instance?.WriteAsync("Reloading list of resx files.");
 
             var allResxFiles = Directory.EnumerateFiles(slnDirectory, "*.resx", SearchOption.AllDirectories);
 
