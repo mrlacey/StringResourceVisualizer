@@ -14,6 +14,10 @@ download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.6
+
+- [x] Add support for ILocalizer in *.cshtml files
+
 ## 1.5
 
 - [x] Allow specifying a 'preferred culture' to use when looking up strings to display.

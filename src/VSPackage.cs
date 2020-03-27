@@ -144,7 +144,7 @@ namespace StringResourceVisualizer
 
                 if (string.IsNullOrWhiteSpace(rootDir))
                 {
-                    await OutputPane.Instance?.WriteAsync("No solution file found so attempting to load resources for project file only.");
+                    await OutputPane.Instance?.WriteAsync("No solution file found so attempting to load resources for project file.");
 
                     fileName = ((dte.ActiveSolutionProjects as Array).GetValue(0) as EnvDTE.Project).FileName;
 
@@ -325,7 +325,9 @@ namespace StringResourceVisualizer
                 }
             }
 
-            await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory, preferredCulture);
+            var supportAspNetLocalizer = this.Options.SupportAspNetLocalizer;
+
+            await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory, preferredCulture, supportAspNetLocalizer);
         }
     }
 }

@@ -78,5 +78,41 @@ namespace StringResourceVisualizer
 
             return result;
         }
+
+        public static async Task<List<int>> GetAllIndexesCaseInsensitiveAsync(this string source, string searchTerm)
+        {
+            var result = new List<int>();
+
+            try
+            {
+                var startPos = 0;
+
+                while (startPos > -1 && startPos <= source.Length)
+                {
+                    var index = source.Substring(startPos).IndexOf(searchTerm, StringComparison.InvariantCultureIgnoreCase);
+
+                    if (index > -1)
+                    {
+                        result.Add(startPos + index);
+                        startPos = startPos + index + 1;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await OutputPane.Instance?.WriteAsync("Error in GetAllIndexesCaseInsensitiveAsync");
+                await OutputPane.Instance?.WriteAsync(source);
+                await OutputPane.Instance?.WriteAsync(searchTerm);
+                await OutputPane.Instance?.WriteAsync(ex.Message);
+                await OutputPane.Instance?.WriteAsync(ex.Source);
+                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+            }
+
+            return result;
+        }
     }
 }

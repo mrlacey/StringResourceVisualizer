@@ -14,6 +14,11 @@ namespace StringResourceVisualizer
         [Description("Specify a culture to use in preference to the default.")]
         public string PreferredCulture { get; set; } = string.Empty;
 
+        [Category("Experimental")]
+        [DisplayName("ASP.NET Core ILocalizer support")]
+        [Description("Attempt to load and show resources used by ILocalizer.")]
+        public bool SupportAspNetLocalizer { get; set; } = true;
+
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
