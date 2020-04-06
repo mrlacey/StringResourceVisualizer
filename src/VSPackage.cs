@@ -325,9 +325,7 @@ namespace StringResourceVisualizer
                 }
             }
 
-            var supportAspNetLocalizer = this.Options.SupportAspNetLocalizer;
-
-            await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory, preferredCulture, supportAspNetLocalizer);
+            await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory, preferredCulture, this.Options);
         }
     }
 }

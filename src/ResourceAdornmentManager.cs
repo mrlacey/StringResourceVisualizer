@@ -30,6 +30,7 @@ namespace StringResourceVisualizer
         private readonly IAdornmentLayer layer;
         private readonly IWpfTextView view;
         private readonly string fileName;
+        private readonly List<(string alias, int lineNo, string resName)> aliases = new List<(string alias, int lineNo, string resName)>();
         private bool hasDoneInitialCreateVisualsPass = false;
 
         public ResourceAdornmentManager(IWpfTextView view)
@@ -64,11 +65,13 @@ namespace StringResourceVisualizer
 
         public static bool SupportAspNetLocalizer { get; private set; }
 
+        public static bool SupportNamespaceAliases { get; private set; }
+
         // Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
         // Also use this to identify lines to pad so the textblocks can be seen
         public Dictionary<int, List<(TextBlock textBlock, string resName)>> DisplayedTextBlocks { get; set; } = new Dictionary<int, List<(TextBlock textBlock, string resName)>>();
 
-        public static async Task LoadResourcesAsync(List<string> resxFilesOfInterest, string slnDirectory, string preferredCulture, bool supportAspNetLocalizer)
+        public static async Task LoadResourcesAsync(List<string> resxFilesOfInterest, string slnDirectory, string preferredCulture, OptionsGrid options)
         {
             await TaskScheduler.Default;
 
@@ -80,7 +83,8 @@ namespace StringResourceVisualizer
 
             // Store this as will need it when looking up which text to use in the adornment.
             PreferredCulture = preferredCulture;
-            SupportAspNetLocalizer = supportAspNetLocalizer;
+            SupportAspNetLocalizer = options.SupportAspNetLocalizer;
+            SupportNamespaceAliases = options.SupportNamespaceAliases;
 
             foreach (var resourceFile in resxFilesOfInterest)
             {
@@ -301,7 +305,7 @@ namespace StringResourceVisualizer
                 return result;
             }
 
-            // TODO: Cache text retrieved from the resource file based on fileName and key. - Invalidate the cache when reload resource files.
+            // TODO: Cache text retrieved from the resource file based on fileName and key. - Invalidate the cache when reload resource files. This will save querying the XMLDocument each time.
             try
             {
                 if (!ResourceFiles.Any())
@@ -319,6 +323,35 @@ namespace StringResourceVisualizer
                     lineText = lineText.Substring(0, lineText.IndexOf(Environment.NewLine, StringComparison.InvariantCultureIgnoreCase));
                 }
 
+                string[] searchArray = SearchValues.ToArray();
+
+                if (SupportNamespaceAliases)
+                {
+                    if (lineText.StartsWith("using ") & lineText.Contains(" = "))
+                    {
+                        // If a line with a known alias has changed forget everything we know about aliases and reload them all.
+                        // Edge cases may temporarily be lost at this point but only if multiple aliases are specified in a file and there are many lones between them.
+                        if (this.aliases.Any(a => a.lineNo == lineNumber))
+                        {
+                            this.aliases.Clear();
+                        }
+
+                        foreach (var searchTerm in SearchValues)
+                        {
+                            if (lineText.Trim().EndsWith($".{searchTerm.Replace(".", string.Empty)};"))
+                            {
+                                // 6 = "using ".Length
+                                var alias = lineText.Substring(6, lineText.IndexOf(" = ") - 6).Trim();
+
+                                // Add the dot here as it will save adding it for each line when look for usage.
+                                this.aliases.Add(($"{alias}.", lineNumber, searchTerm));
+                            }
+                        }
+                    }
+
+                    searchArray = SearchValues.Concat(this.aliases.Select(a => a.alias).ToList()).ToArray();
+                }
+
                 // Remove any textblocks displayed on this line so it won't conflict with anything we add below.
                 // Handles no textblocks to show or the text to display having changed.
                 if (this.DisplayedTextBlocks.ContainsKey(lineNumber))
@@ -331,7 +364,7 @@ namespace StringResourceVisualizer
                     this.DisplayedTextBlocks.Remove(lineNumber);
                 }
 
-                var indexes = await lineText.GetAllIndexesAsync(SearchValues.ToArray());
+                var indexes = await lineText.GetAllIndexesAsync(searchArray);
 
                 List<int> localizerIndexes;
 
@@ -393,6 +426,18 @@ namespace StringResourceVisualizer
 
                             var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
                             var fileBaseName = foundText.Substring(0, foundText.IndexOf('.'));
+
+                            if (SupportNamespaceAliases)
+                            {
+                                // Look for alias use
+                                var alias = this.aliases.FirstOrDefault(a => a.alias == $"{fileBaseName}.");
+
+                                if (alias.resName != null)
+                                {
+                                    // Substitute for the value the alias represents.
+                                    fileBaseName = alias.resName.Replace(".", string.Empty);
+                                }
+                            }
 
                             foreach (var (_, xDoc) in this.GetDocsOfInterest(fileBaseName, XmlDocs, PreferredCulture))
                             {
