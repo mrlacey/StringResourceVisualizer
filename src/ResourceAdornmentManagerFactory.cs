@@ -14,7 +14,7 @@ namespace StringResourceVisualizer
     /// </summary>
     [Export(typeof(IWpfTextViewCreationListener))]
 #pragma warning disable SA1133 // Do not combine attributes
-    [ContentType("CSharp"), ContentType("Basic")]
+    [ContentType("CSharp"), ContentType("Basic"), ContentType("Razor"), ContentType("RazorCSharp"), ContentType("RazorCoreCSharp")]
 #pragma warning restore SA1133 // Do not combine attributes
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal sealed class ResourceAdornmentManagerFactory : IWpfTextViewCreationListener

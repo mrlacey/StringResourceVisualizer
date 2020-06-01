@@ -1,12 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28302.56
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29920.165
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StringResourceVisualizer", "src\StringResourceVisualizer.csproj", "{E71A6E00-D6F7-4401-9515-1DD72701EC57}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F0206BFC-99B1-481B-8248-F4C4995858FC}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		appveyor.yml = appveyor.yml
 		CHANGELOG.md = CHANGELOG.md
 		DeveloperReleaseNotes.txt = DeveloperReleaseNotes.txt
