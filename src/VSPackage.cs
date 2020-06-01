@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using EnvDTE;
 using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.ComponentModelHost;
+using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
@@ -99,8 +101,16 @@ namespace StringResourceVisualizer
 
             // Listen for subsequent solution events
             SolutionEvents.OnAfterOpenSolution += this.HandleOpenSolution;
+            SolutionEvents.OnAfterCloseSolution += this.HandleCloseSolution;
+
+            await this.SetUpRunningDocumentTableEventsAsync(cancellationToken).ConfigureAwait(false);
+
+            var componentModel = GetGlobalService(typeof(SComponentModel)) as IComponentModel;
+            await ConstFinder.TryParseSolutionAsync(componentModel);
 
             await this.LoadSystemTextSettingsAsync(cancellationToken);
+
+            VSColorTheme.ThemeChanged += (e) => this.LoadSystemTextSettingsAsync(CancellationToken.None).LogAndForget(nameof(StringResourceVisualizer));
         }
 
         private async Task<bool> IsSolutionLoadedAsync(CancellationToken cancellationToken)
@@ -120,6 +130,11 @@ namespace StringResourceVisualizer
         private void HandleOpenSolution(object sender, EventArgs e)
         {
             this.JoinableTaskFactory.RunAsync(() => this.HandleOpenSolutionAsync(this.DisposalToken)).Task.LogAndForget("StringResourceVisualizer");
+        }
+
+        private void HandleCloseSolution(object sender, EventArgs e)
+        {
+            ConstFinder.Reset();
         }
 
         private async Task HandleOpenSolutionAsync(CancellationToken cancellationToken)
@@ -188,6 +203,20 @@ namespace StringResourceVisualizer
                     await OutputPane.Instance?.WriteAsync("String Resource Visualizer could not find any resource files to load.");
                 }
             }
+
+            if (!ConstFinder.HasParsedSolution)
+            {
+                await ConstFinder.TryParseSolutionAsync();
+            }
+        }
+
+        private async Task SetUpRunningDocumentTableEventsAsync(CancellationToken cancellationToken)
+        {
+            await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+
+            var runningDocumentTable = new RunningDocumentTable(this);
+
+            runningDocumentTable.Advise(MyRunningDocTableEvents.Instance);
         }
 
         private void WatchForSolutionOrProjectChanges(string solutionFileName)
@@ -218,37 +247,75 @@ namespace StringResourceVisualizer
             this.ProjWatcher.EnableRaisingEvents = true;
         }
 
+#pragma warning disable VSTHRD100 // Avoid async void methods
         private async void SlnWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            await this.SetOrUpdateListOfResxFilesAsync(Path.GetDirectoryName(e.FullPath));
+            try
+            {
+                await this.SetOrUpdateListOfResxFilesAsync(Path.GetDirectoryName(e.FullPath));
+            }
+            catch (Exception exc)
+            {
+                await OutputPane.Instance?.WriteAsync("Unexpected error when solution changed.");
+                await OutputPane.Instance?.WriteAsync(exc.Message);
+                await OutputPane.Instance?.WriteAsync(exc.StackTrace);
+            }
         }
 
         private async void SlnWatcher_Renamed(object sender, RenamedEventArgs e)
         {
-            // Don't want to know about temporary files created during save.
-            if (e.FullPath.EndsWith(".sln"))
+            try
             {
-                await this.SetOrUpdateListOfResxFilesAsync(Path.GetDirectoryName(e.FullPath));
+                // Don't want to know about temporary files created during save.
+                if (e.FullPath.EndsWith(".sln"))
+                {
+                    await this.SetOrUpdateListOfResxFilesAsync(Path.GetDirectoryName(e.FullPath));
+                }
+            }
+            catch (Exception exc)
+            {
+                await OutputPane.Instance?.WriteAsync("Unexpected error when solution renamed.");
+                await OutputPane.Instance?.WriteAsync(exc.Message);
+                await OutputPane.Instance?.WriteAsync(exc.StackTrace);
             }
         }
 
         private async void ProjWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            // Only interested in C# & VB.Net projects as that's all we visualize for.
-            if (e.FullPath.EndsWith(".csproj") || e.FullPath.EndsWith(".vbproj"))
+            try
             {
-                await this.SetOrUpdateListOfResxFilesAsync(((FileSystemWatcher)sender).Path);
+                // Only interested in C# & VB.Net projects as that's all we visualize for.
+                if (e.FullPath.EndsWith(".csproj") || e.FullPath.EndsWith(".vbproj"))
+                {
+                    await this.SetOrUpdateListOfResxFilesAsync(((FileSystemWatcher)sender).Path);
+                }
+            }
+            catch (Exception exc)
+            {
+                await OutputPane.Instance?.WriteAsync("Unexpected error when project changed.");
+                await OutputPane.Instance?.WriteAsync(exc.Message);
+                await OutputPane.Instance?.WriteAsync(exc.StackTrace);
             }
         }
 
         private async void ProjWatcher_Renamed(object sender, RenamedEventArgs e)
         {
-            // Only interested in C# & VB.Net projects as that's all we visualize for.
-            if (e.FullPath.EndsWith(".csproj") || e.FullPath.EndsWith(".vbproj"))
+            try
             {
-                await this.SetOrUpdateListOfResxFilesAsync(((FileSystemWatcher)sender).Path);
+                // Only interested in C# & VB.Net projects as that's all we visualize for.
+                if (e.FullPath.EndsWith(".csproj") || e.FullPath.EndsWith(".vbproj"))
+                {
+                    await this.SetOrUpdateListOfResxFilesAsync(((FileSystemWatcher)sender).Path);
+                }
+            }
+            catch (Exception exc)
+            {
+                await OutputPane.Instance?.WriteAsync("Unexpected error when project renamed.");
+                await OutputPane.Instance?.WriteAsync(exc.Message);
+                await OutputPane.Instance?.WriteAsync(exc.StackTrace);
             }
         }
+#pragma warning restore VSTHRD100 // Avoid async void methods
 
         private async Task LoadSystemTextSettingsAsync(CancellationToken cancellationToken)
         {

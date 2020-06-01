@@ -12,9 +12,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("StringResourceVisualizer")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Matt Lacey Ltd.")]
 [assembly: AssemblyProduct("StringResourceVisualizer")]
-[assembly: AssemblyCopyright("")]
+[assembly: AssemblyCopyright("Copyright © Matt Lacey Ltd. 2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

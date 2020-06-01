@@ -179,19 +179,39 @@ namespace StringResourceVisualizer
         /// </remarks>
         public void Dispose() => this.UnsubscribeFromViewerEvents();
 
+#pragma warning disable VSTHRD100 // Avoid async void methods
         private static async void ResxWatcher_Renamed(object sender, RenamedEventArgs e)
         {
-            // Don't want to know about files being named from .resx to something else
-            if (e.FullPath.EndsWith(".resx"))
+            try
             {
-                await ReloadResourceFileAsync(e.FullPath);
+                // Don't want to know about files being named from .resx to something else
+                if (e.FullPath.EndsWith(".resx"))
+                {
+                    await ReloadResourceFileAsync(e.FullPath);
+                }
+            }
+            catch (Exception exc)
+            {
+                await OutputPane.Instance?.WriteAsync("Unexpected error when resx file renamed.");
+                await OutputPane.Instance?.WriteAsync(exc.Message);
+                await OutputPane.Instance?.WriteAsync(exc.StackTrace);
             }
         }
 
         private static async void ResxWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            await ReloadResourceFileAsync(e.FullPath);
+            try
+            {
+                await ReloadResourceFileAsync(e.FullPath);
+            }
+            catch (Exception exc)
+            {
+                await OutputPane.Instance?.WriteAsync("Unexpected error when resx file changed.");
+                await OutputPane.Instance?.WriteAsync(exc.Message);
+                await OutputPane.Instance?.WriteAsync(exc.StackTrace);
+            }
         }
+#pragma warning restore VSTHRD100 // Avoid async void methods
 
         private static async Task ReloadResourceFileAsync(string filePath)
         {
@@ -242,7 +262,9 @@ namespace StringResourceVisualizer
         /// <summary>
         /// On layout change add the adornment to any reformatted lines.
         /// </summary>
+#pragma warning disable VSTHRD100 // Avoid async void methods
         private async void LayoutChangedHandler(object sender, TextViewLayoutChangedEventArgs e)
+#pragma warning restore VSTHRD100 // Avoid async void methods
         {
             if (ResourcesLoaded)
             {
@@ -396,29 +418,58 @@ namespace StringResourceVisualizer
                         if (localizerIndexes.Contains(matchIndex))
                         {
                             var lineSearchStart = matchIndex + localizerIndicator.Length;
-                            if (lineText.Substring(lineSearchStart, 1).Equals("\""))
+
+                            var locClosingPos = lineText.IndexOf(']', lineSearchStart);
+
+                            var locKey = lineText.Substring(lineSearchStart, locClosingPos - lineSearchStart);
+
+                            if (locKey.StartsWith("\""))
                             {
                                 var closingQuotePos = lineText.IndexOf('"', lineSearchStart + 1);
 
                                 if (closingQuotePos > -1)
                                 {
                                     foundText = lineText.Substring(lineSearchStart + 1, closingQuotePos - lineSearchStart - 1);
+                                }
+                            }
+                            else
+                            {
+                                // key is a constant so need to look up the value
 
-                                    foreach (var xDoc in this.GetLocalizerDocsOfInterest(this.fileName, XmlDocs, PreferredCulture))
+                                var lastDot = locKey.LastIndexOf('.');
+
+                                var qualifier = string.Empty;
+                                var constName = string.Empty;
+
+                                if (lastDot >= 0)
+                                {
+                                    qualifier = locKey.Substring(0, lastDot);
+                                    constName = locKey.Substring(lastDot + 1);
+                                }
+                                else
+                                {
+                                    constName = locKey;
+                                    }
+
+                                foundText = ConstFinder.GetDisplayText(constName, qualifier, this.fileName).Trim('"');
+                            }
+
+                            if (!string.IsNullOrEmpty(foundText))
+                            {
+                                foreach (var xDoc in this.GetLocalizerDocsOfInterest(this.fileName, XmlDocs, PreferredCulture))
+                                {
+                                    displayText = GetDisplayTextFromDoc(xDoc, foundText);
+
+                                    if (!string.IsNullOrWhiteSpace(displayText))
                                     {
-                                        displayText = GetDisplayTextFromDoc(xDoc, foundText);
-
-                                        if (!string.IsNullOrWhiteSpace(displayText))
-                                        {
-                                            break;
-                                        }
+                                        break;
                                     }
                                 }
                             }
                         }
                         else
                         {
-                            endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '}', ';' }, lineText.IndexOf('.', matchIndex) + 1);
+                            endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '{', '}', ';' }, lineText.IndexOf('.', matchIndex) + 1);
 
                             foundText = endPos > matchIndex
                                 ? lineText.Substring(matchIndex, endPos - matchIndex)
