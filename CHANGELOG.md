@@ -16,7 +16,9 @@ on the official Visual Studio extension gallery.
 
 ## 1.6
 
-- [x] Add support for ILocalizer in *.cshtml files
+- [x] Add support for ILocalizer in *.cshtml & *.cs files
+- [x] Allow ILocalizer keys to be constants
+- [x] Support using aliases
 
 ## 1.5
 
