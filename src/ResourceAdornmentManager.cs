@@ -435,21 +435,16 @@ namespace StringResourceVisualizer
                             else
                             {
                                 // key is a constant so need to look up the value
-
                                 var lastDot = locKey.LastIndexOf('.');
 
                                 var qualifier = string.Empty;
-                                var constName = string.Empty;
+                                var constName = locKey;
 
                                 if (lastDot >= 0)
                                 {
                                     qualifier = locKey.Substring(0, lastDot);
                                     constName = locKey.Substring(lastDot + 1);
                                 }
-                                else
-                                {
-                                    constName = locKey;
-                                    }
 
                                 foundText = ConstFinder.GetDisplayText(constName, qualifier, this.fileName).Trim('"');
                             }

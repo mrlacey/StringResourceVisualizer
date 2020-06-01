@@ -9,7 +9,7 @@
         <ReleaseNotes>https://github.com/mrlacey/StringResourceVisualizer/CHANGELOG.md</ReleaseNotes>
         <Icon>Resources\Icon.png</Icon>
         <PreviewImage>Resources\Icon.png</PreviewImage>
-        <Tags>Strings, resources, localization, resx, I18N</Tags>
+        <Tags>Strings, resources, localization, resx, I18N, ILocalizer</Tags>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0, 17.0)" />
