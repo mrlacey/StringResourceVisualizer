@@ -13,10 +13,13 @@ namespace StringResourceVisualizer
     {
         internal static void LogAndForget(this Task task, string source) =>
             task.ContinueWith(
-                (t, s) => VsShellUtilities.LogError(s as string, t.Exception.ToString()),
+                (t, s) => VsShellUtilities.LogError(s as string, t.Exception?.ToString()),
                 source,
                 CancellationToken.None,
                 TaskContinuationOptions.OnlyOnFaulted,
-                VsTaskLibraryHelper.GetTaskScheduler(VsTaskRunContext.UIThreadNormalPriority));
+                TaskScheduler.Default);
+
+        // Use the helper library (instead of TaskScheduler.Default) when drop support for VS2017
+        ////VsTaskLibraryHelper.GetTaskScheduler(VsTaskRunContext.UIThreadNormalPriority));
     }
 }
