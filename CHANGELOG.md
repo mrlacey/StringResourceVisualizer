@@ -5,8 +5,7 @@
 - [ ] RESW support
 - [ ] [Open to suggestions...](https://github.com/mrlacey/StringResourceVisualizer/issues/new)
 
-Features that have a checkmark are complete and available for
-download in the
+Features that have a checkmark are complete and available for download in the
 [CI build](http://vsixgallery.com/extension/StringResourceVisualizer.a05f89b1-98f8-4b37-8f84-4fdebc44aa25/).
 
 # Change log
@@ -17,6 +16,7 @@ on the official Visual Studio extension gallery.
 ## 1.8
 
 - [x] Add Sponsor Request hint.
+- [x] Support VS2022.
 
 ## 1.7
 
