@@ -25,7 +25,7 @@ namespace StringResourceVisualizer
     [ProvideAutoLoad(UIContextGuids.SolutionHasMultipleProjects, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [InstalledProductRegistration("#110", "#112", "1.7")] // Info on this package for Help/About
+    [InstalledProductRegistration("#110", "#112", "1.8")] // Info on this package for Help/About
     [ProvideOptionPage(typeof(OptionsGrid), "String Resource Visualizer", "General", 0, 0, true)]
     [Guid(StringResVizPackage.PackageGuidString)]
     public sealed class StringResVizPackage : AsyncPackage
@@ -86,6 +86,8 @@ namespace StringResourceVisualizer
             await this.LoadSystemTextSettingsAsync(cancellationToken);
 
             VSColorTheme.ThemeChanged += (e) => this.LoadSystemTextSettingsAsync(CancellationToken.None).LogAndForget(nameof(StringResourceVisualizer));
+
+            await SponsorRequestHelper.CheckIfNeedToShowAsync();
         }
 
         private async Task<bool> IsSolutionLoadedAsync(CancellationToken cancellationToken)

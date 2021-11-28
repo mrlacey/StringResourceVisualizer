@@ -14,10 +14,13 @@ download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.8
+
+- [x] Add Sponsor Request hint.
+
 ## 1.7
 
 - [x] Drop support for VS2017 😢 Sorry, I can't get it to compile and work there correctly anymore.
-
 
 ## 1.6
 
