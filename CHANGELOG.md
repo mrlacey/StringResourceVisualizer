@@ -13,6 +13,10 @@ Features that have a checkmark are complete and available for download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.9
+
+- [x] Fix occassional crash when opening some projects.
+
 ## 1.8
 
 - [x] Add Sponsor Request hint.

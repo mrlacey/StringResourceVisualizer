@@ -109,7 +109,14 @@ namespace StringResourceVisualizer
             {
                 var root = await document.GetSyntaxRootAsync();
 
-                GetConstsFromSyntaxRoot(root, document.FilePath);
+                if (root != null)
+                {
+                    GetConstsFromSyntaxRoot(root, document.FilePath);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("No Syntax tree available for: " + document.FilePath);
+                }
             }
 
             return result;
