@@ -313,7 +313,22 @@ namespace StringResourceVisualizer
                         {
                             var returnIndex = result.IndexOfAny(new[] { '\r', '\n' });
 
-                            if (returnIndex >= 0)
+                            if (returnIndex == 0)
+                            {
+                                result = result.TrimStart(' ', '\r', '\n');
+                                returnIndex = result.IndexOfAny(new[] { '\r', '\n' });
+
+                                if (returnIndex >= 0)
+                                {
+                                    // Truncate at first wrapping character and add "Return Character" to indicate truncation
+                                    result = "⏎" + result.Substring(0, returnIndex) + "⏎";
+                                }
+                                else
+                                {
+                                    result = "⏎" + result;
+                                }
+                            }
+                            else if (returnIndex > 0)
                             {
                                 // Truncate at first wrapping character and add "Return Character" to indicate truncation
                                 result = result.Substring(0, returnIndex) + "⏎";
