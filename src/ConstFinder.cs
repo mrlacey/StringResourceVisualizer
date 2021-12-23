@@ -2,6 +2,7 @@
 // Copyright (c) Matt Lacey. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -69,28 +70,55 @@ namespace StringResourceVisualizer
         public static async Task ReloadConstsAsync()
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            var componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
 
-            if (ConstFinder.HasParsedSolution)
+            try
             {
-                var dte = Package.GetGlobalService(typeof(EnvDTE.DTE)) as EnvDTE.DTE;
-                var activeDocument = dte?.ActiveDocument;
-                if (activeDocument != null)
-                {
-                    var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
-                    var documentId = workspace.CurrentSolution.GetDocumentIdsWithFilePath(activeDocument.FullName).FirstOrDefault();
-                    if (documentId != null)
-                    {
-                        var document = workspace.CurrentSolution.GetDocument(documentId);
+                var componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
 
-                        await TrackConstsInDocumentAsync(document);
+                if (ConstFinder.HasParsedSolution)
+                {
+                    var dte = Package.GetGlobalService(typeof(EnvDTE.DTE)) as EnvDTE.DTE;
+                    var activeDocument = SafeGetActiveDocument(dte);
+                    if (activeDocument != null)
+                    {
+                        var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
+                        var documentId = workspace.CurrentSolution.GetDocumentIdsWithFilePath(activeDocument.FullName).FirstOrDefault();
+                        if (documentId != null)
+                        {
+                            var document = workspace.CurrentSolution.GetDocument(documentId);
+
+                            await TrackConstsInDocumentAsync(document);
+                        }
                     }
                 }
+                else
+                {
+                    await ConstFinder.TryParseSolutionAsync(componentModel);
+                }
             }
-            else
+            catch (Exception exc)
             {
-                await ConstFinder.TryParseSolutionAsync(componentModel);
+                await OutputPane.Instance?.WriteAsync($"Error in {nameof(ReloadConstsAsync)}");
+                await OutputPane.Instance?.WriteAsync(exc.Message);
+                await OutputPane.Instance?.WriteAsync(exc.Source);
+                await OutputPane.Instance?.WriteAsync(exc.StackTrace);
             }
+        }
+
+        private static EnvDTE.Document SafeGetActiveDocument(EnvDTE.DTE dte)
+        {
+            try
+            {
+                // Some document types (inc. .csproj) throw an error when try and get the ActiveDocument
+                // "The parameter is incorrect. (Exception from HRESULT: 0x80070057 (E_INVALIDARG))"
+                return dte?.ActiveDocument;
+            }
+            catch (Exception exc)
+            {
+                System.Diagnostics.Debug.WriteLine(exc);
+            }
+
+            return null;
         }
 
         public static async Task<bool> TrackConstsInDocumentAsync(Document document)
