@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
@@ -46,9 +48,23 @@ namespace StringResourceVisualizer
             this.generalPane?.Activate();
         }
 
+        public async Task ActivateAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(CancellationToken.None);
+
+            this.generalPane?.Activate();
+        }
+
         public void WriteLine(string message)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
+
+            this.generalPane?.OutputStringThreadSafe($"{message}{Environment.NewLine}");
+        }
+
+        public async Task WriteAsync(string message)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(CancellationToken.None);
 
             this.generalPane?.OutputStringThreadSafe($"{message}{Environment.NewLine}");
         }

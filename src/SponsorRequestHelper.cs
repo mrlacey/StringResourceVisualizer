@@ -3,7 +3,8 @@
 // </copyright>
 
 using System;
-using System.Threading.Tasks;
+using Microsoft.VisualStudio.Shell;
+using Task = System.Threading.Tasks.Task;
 
 namespace StringResourceVisualizer
 {
@@ -15,34 +16,36 @@ namespace StringResourceVisualizer
             {
                 if (new Random().Next(1, 10) == 2)
                 {
-                    ShowThanksForSponsorshipMessage();
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                    await ShowThanksForSponsorshipMessageAsync();
                 }
             }
             else
             {
-                ShowPromptForSponsorship();
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                await ShowPromptForSponsorshipAsync();
             }
         }
 
-        private static void ShowThanksForSponsorshipMessage()
+        private static async Task ShowThanksForSponsorshipMessageAsync()
         {
-            GeneralOutputPane.Instance.WriteLine("Thank you for your sponsorship. It really helps.");
-            GeneralOutputPane.Instance.WriteLine("If you have ideas for new features or suggestions for new features");
-            GeneralOutputPane.Instance.WriteLine("please raise an issue at https://github.com/mrlacey/StringResourceVisualizer/issues");
-            GeneralOutputPane.Instance.WriteLine(string.Empty);
+            await GeneralOutputPane.Instance.WriteAsync("Thank you for your sponsorship. It really helps.");
+            await GeneralOutputPane.Instance.WriteAsync("If you have ideas for new features or suggestions for new features");
+            await GeneralOutputPane.Instance.WriteAsync("please raise an issue at https://github.com/mrlacey/StringResourceVisualizer/issues");
+            await GeneralOutputPane.Instance.WriteAsync(string.Empty);
         }
 
-        private static void ShowPromptForSponsorship()
+        private static async Task ShowPromptForSponsorshipAsync()
         {
-            GeneralOutputPane.Instance.WriteLine("Sorry to interrupt. I know your time is busy, presumably that's why you installed this extension.");
-            GeneralOutputPane.Instance.WriteLine("I'm happy that the extensions I've created have been able to help you and many others");
-            GeneralOutputPane.Instance.WriteLine("but I also need to make a living, and two years without work and extended periods of illness have been a challenge. - I didn't qualify for any government support either. :(");
-            GeneralOutputPane.Instance.WriteLine(string.Empty);
-            GeneralOutputPane.Instance.WriteLine("Show your support by making a one-off or recurring donation at https://github.com/sponsors/mrlacey");
-            GeneralOutputPane.Instance.WriteLine(string.Empty);
-            GeneralOutputPane.Instance.WriteLine("If you become a sponsor, I'll tell you how to hide this message too. ;)");
-            GeneralOutputPane.Instance.WriteLine(string.Empty);
-            GeneralOutputPane.Instance.Activate();
+            await GeneralOutputPane.Instance.WriteAsync("Sorry to interrupt. I know your time is busy, presumably that's why you installed this extension.");
+            await GeneralOutputPane.Instance.WriteAsync("I'm happy that the extensions I've created have been able to help you and many others");
+            await GeneralOutputPane.Instance.WriteAsync("but I also need to make a living, and two years without work and extended periods of illness have been a challenge. - I didn't qualify for any government support either. :(");
+            await GeneralOutputPane.Instance.WriteAsync(string.Empty);
+            await GeneralOutputPane.Instance.WriteAsync("Show your support by making a one-off or recurring donation at https://github.com/sponsors/mrlacey");
+            await GeneralOutputPane.Instance.WriteAsync(string.Empty);
+            await GeneralOutputPane.Instance.WriteAsync("If you become a sponsor, I'll tell you how to hide this message too. ;)");
+            await GeneralOutputPane.Instance.WriteAsync(string.Empty);
+            await GeneralOutputPane.Instance.ActivateAsync();
         }
     }
 }
