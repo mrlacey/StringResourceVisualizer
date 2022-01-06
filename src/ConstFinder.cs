@@ -105,22 +105,6 @@ namespace StringResourceVisualizer
             }
         }
 
-        private static EnvDTE.Document SafeGetActiveDocument(EnvDTE.DTE dte)
-        {
-            try
-            {
-                // Some document types (inc. .csproj) throw an error when try and get the ActiveDocument
-                // "The parameter is incorrect. (Exception from HRESULT: 0x80070057 (E_INVALIDARG))"
-                return dte?.ActiveDocument;
-            }
-            catch (Exception exc)
-            {
-                System.Diagnostics.Debug.WriteLine(exc);
-            }
-
-            return null;
-        }
-
         public static async Task<bool> TrackConstsInDocumentAsync(Document document)
         {
             if (document == null)
@@ -279,6 +263,22 @@ namespace StringResourceVisualizer
             }
 
             return string.Empty;
+        }
+
+        private static EnvDTE.Document SafeGetActiveDocument(EnvDTE.DTE dte)
+        {
+            try
+            {
+                // Some document types (inc. .csproj) throw an error when try and get the ActiveDocument
+                // "The parameter is incorrect. (Exception from HRESULT: 0x80070057 (E_INVALIDARG))"
+                return dte?.ActiveDocument;
+            }
+            catch (Exception exc)
+            {
+                System.Diagnostics.Debug.WriteLine(exc);
+            }
+
+            return null;
         }
     }
 }

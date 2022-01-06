@@ -2,7 +2,6 @@
 // Copyright (c) Matt Lacey. All rights reserved.
 // </copyright>
 
-using System;
 using System.Threading.Tasks;
 
 namespace StringResourceVisualizer

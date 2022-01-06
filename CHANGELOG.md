@@ -13,6 +13,10 @@ Features that have a checkmark are complete and available for download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.11
+
+- [x] Fix for possible errors when opening some (more) document types.
+
 ## 1.10
 
 - [x] Fix for handling some document types in VS2022.
