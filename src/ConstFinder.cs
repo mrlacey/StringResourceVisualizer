@@ -123,9 +123,15 @@ namespace StringResourceVisualizer
 
         public static async Task<bool> TrackConstsInDocumentAsync(Document document)
         {
+            if (document == null)
+            {
+                return false;
+            }
+
             System.Diagnostics.Debug.WriteLine(document.FilePath);
 
-            if (document.FilePath.Contains(".g.")
+            if (document.FilePath == null
+                || document.FilePath.Contains(".g.")
                 || document.FilePath.Contains(".Designer."))
             {
                 return false;
