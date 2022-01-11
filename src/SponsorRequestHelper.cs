@@ -37,7 +37,7 @@ namespace StringResourceVisualizer
 
         private static async Task ShowPromptForSponsorshipAsync()
         {
-            await GeneralOutputPane.Instance.WriteAsync("Sorry to interrupt. I know your time is busy, presumably that's why you installed this extension.");
+            await GeneralOutputPane.Instance.WriteAsync("Sorry to interrupt. I know your time is busy, presumably that's why you installed this extension (String Resource Visualizer).");
             await GeneralOutputPane.Instance.WriteAsync("I'm happy that the extensions I've created have been able to help you and many others");
             await GeneralOutputPane.Instance.WriteAsync("but I also need to make a living, and two years without work and extended periods of illness have been a challenge. - I didn't qualify for any government support either. :(");
             await GeneralOutputPane.Instance.WriteAsync(string.Empty);
