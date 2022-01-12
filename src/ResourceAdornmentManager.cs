@@ -25,7 +25,7 @@ namespace StringResourceVisualizer
     /// <summary>
     /// Important class. Handles creation of adornments on appropriate lines.
     /// </summary>
-    internal class ResourceAdornmentManager : IDisposable
+    public class ResourceAdornmentManager : IDisposable
     {
         private readonly IAdornmentLayer layer;
         private readonly IWpfTextView view;
@@ -142,6 +142,39 @@ namespace StringResourceVisualizer
             }
 
             ResourcesLoaded = true;
+        }
+
+        public static string FormatDisplayText(string resourceString)
+        {
+            var result = resourceString;
+
+            if (result != null)
+            {
+                var returnIndex = result.IndexOfAny(new[] { '\r', '\n' });
+
+                if (returnIndex == 0)
+                {
+                    result = result.TrimStart(' ', '\r', '\n');
+                    returnIndex = result.IndexOfAny(new[] { '\r', '\n' });
+
+                    if (returnIndex >= 0)
+                    {
+                        // Truncate at first wrapping character and add "Return Character" to indicate truncation
+                        result = "⏎" + result.Substring(0, returnIndex) + "⏎";
+                    }
+                    else
+                    {
+                        result = "⏎" + result;
+                    }
+                }
+                else if (returnIndex > 0)
+                {
+                    // Truncate at first wrapping character and add "Return Character" to indicate truncation
+                    result = result.Substring(0, returnIndex) + "⏎";
+                }
+            }
+
+            return result;
         }
 
         public string GetFileName(ITextBuffer textBuffer)
@@ -307,33 +340,7 @@ namespace StringResourceVisualizer
                     if (element.GetAttribute("name") == key)
                     {
                         var valueElement = element.GetElementsByTagName("value").Item(0);
-                        result = valueElement?.InnerText;
-
-                        if (result != null)
-                        {
-                            var returnIndex = result.IndexOfAny(new[] { '\r', '\n' });
-
-                            if (returnIndex == 0)
-                            {
-                                result = result.TrimStart(' ', '\r', '\n');
-                                returnIndex = result.IndexOfAny(new[] { '\r', '\n' });
-
-                                if (returnIndex >= 0)
-                                {
-                                    // Truncate at first wrapping character and add "Return Character" to indicate truncation
-                                    result = "⏎" + result.Substring(0, returnIndex) + "⏎";
-                                }
-                                else
-                                {
-                                    result = "⏎" + result;
-                                }
-                            }
-                            else if (returnIndex > 0)
-                            {
-                                // Truncate at first wrapping character and add "Return Character" to indicate truncation
-                                result = result.Substring(0, returnIndex) + "⏎";
-                            }
-                        }
+                        result = FormatDisplayText(valueElement?.InnerText);
 
                         break;
                     }
