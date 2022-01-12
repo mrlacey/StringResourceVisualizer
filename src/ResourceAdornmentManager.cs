@@ -587,7 +587,7 @@ namespace StringResourceVisualizer
         }
 
         /// <summary>
-        /// Get list of resource docs that are most likley to match based on naming & folder structure.
+        /// Get list of resource docs that are most likely to match based on naming & folder structure.
         /// </summary>
         private IEnumerable<XmlDocument> GetLocalizerDocsOfInterest(string filePathName, List<(string path, XmlDocument xDoc)> xmlDocs, string preferredCulture)
         {
