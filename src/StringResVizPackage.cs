@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -25,7 +24,7 @@ namespace StringResourceVisualizer
     [ProvideAutoLoad(UIContextGuids.SolutionHasMultipleProjects, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [InstalledProductRegistration("#110", "#112", "1.12")] // Info on this package for Help/About
+    [InstalledProductRegistration("#110", "#112", "1.13")] // Info on this package for Help/About
     [ProvideOptionPage(typeof(OptionsGrid), "String Resource Visualizer", "General", 0, 0, true)]
     [Guid(StringResVizPackage.PackageGuidString)]
     public sealed class StringResVizPackage : AsyncPackage
@@ -39,6 +38,8 @@ namespace StringResourceVisualizer
             // not sited yet inside Visual Studio environment. The place to do all the other
             // initialization is the Initialize method.
         }
+
+        public static StringResVizPackage Instance { get; private set; }
 
         public OptionsGrid Options
         {
@@ -88,6 +89,8 @@ namespace StringResourceVisualizer
             VSColorTheme.ThemeChanged += (e) => this.LoadSystemTextSettingsAsync(CancellationToken.None).LogAndForget(nameof(StringResourceVisualizer));
 
             await SponsorRequestHelper.CheckIfNeedToShowAsync();
+
+            Instance = this;
         }
 
         private async Task<bool> IsSolutionLoadedAsync(CancellationToken cancellationToken)

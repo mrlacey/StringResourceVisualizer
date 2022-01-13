@@ -27,10 +27,9 @@ namespace StringResourceVisualizer
             if (this.manager.DisplayedTextBlocks.ContainsKey(lineNumber)
              && this.manager.DisplayedTextBlocks[lineNumber].Count > 0)
             {
-                // Add 1 ensure adequate space between lines.
-                var defaultTopSpace = line.DefaultLineTransform.TopSpace + 1;
-                var defaultBottomSpace = line.DefaultLineTransform.BottomSpace;
-                lineTransform = new LineTransform(defaultTopSpace + ResourceAdornmentManager.TextSize, defaultBottomSpace, 1.0);
+                var spaceAboveLine = line.DefaultLineTransform.TopSpace + ((StringResVizPackage.Instance.Options.TopPadding + StringResVizPackage.Instance.Options.BottomPadding) * Constants.TextBlockSizeToFontScaleFactor);
+                var spaceBelowLine = line.DefaultLineTransform.BottomSpace;
+                lineTransform = new LineTransform(spaceAboveLine + ResourceAdornmentManager.TextSize, spaceBelowLine, 1.0);
             }
             else
             {

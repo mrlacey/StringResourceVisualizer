@@ -528,14 +528,16 @@ namespace StringResourceVisualizer
                             var brush = new SolidColorBrush(TextForegroundColor);
                             brush.Freeze();
 
-                            const double textBlockSizeToFontScaleFactor = 1.4;
+                            var height = (TextSize * Constants.TextBlockSizeToFontScaleFactor) + StringResVizPackage.Instance.Options.TopPadding + StringResVizPackage.Instance.Options.BottomPadding;
 
                             var tb = new TextBlock
                             {
                                 Foreground = brush,
                                 Text = $"\"{displayText}\"",
                                 FontSize = TextSize,
-                                Height = TextSize * textBlockSizeToFontScaleFactor,
+                                Height = height,
+                                VerticalAlignment = VerticalAlignment.Top,
+                                Padding = new Thickness(0, StringResVizPackage.Instance.Options.TopPadding, 0, 0),
                             };
 
                             this.DisplayedTextBlocks[lineNumber].Add((tb, foundText));

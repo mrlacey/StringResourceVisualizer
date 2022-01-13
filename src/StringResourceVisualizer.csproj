@@ -57,6 +57,7 @@
     <CodeAnalysisRuleSet>StringResourceVisualizer.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Constants.cs" />
     <Compile Include="ConstFinder.cs" />
     <Compile Include="GeneralOutputPane.cs" />
     <Compile Include="GlobalSuppressions.cs" />
