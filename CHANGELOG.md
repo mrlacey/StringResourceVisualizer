@@ -13,6 +13,14 @@ Features that have a checkmark are complete and available for download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.14
+
+- [x] Handle internal exception scenario.
+
+## 1.13
+
+- [x] Support adjusting the spacing around the text indicator.
+
 ## 1.12
 
 - [x] Increase spacing between indicator and the line above.

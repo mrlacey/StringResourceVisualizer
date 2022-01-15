@@ -142,6 +142,11 @@ namespace StringResourceVisualizer
 
         public static void GetConstsFromSyntaxRoot(SyntaxNode root, string filePath)
         {
+            if (root == null || filePath == null)
+            {
+                return;
+            }
+
             // Avoid parsing generated code.
             // Reduces overhead (as there may be lots)
             // Avoids assets included with Android projects.
@@ -171,7 +176,7 @@ namespace StringResourceVisualizer
             {
                 if (vdec != null)
                 {
-                    if (vdec.Parent is MemberDeclarationSyntax dec)
+                    if (vdec.Parent != null && vdec.Parent is MemberDeclarationSyntax dec)
                     {
                         if (IsConst(dec))
                         {
@@ -179,7 +184,7 @@ namespace StringResourceVisualizer
                             {
                                 var qualification = GetQualification(fds);
 
-                                foreach (var variable in fds.Declaration.Variables)
+                                foreach (var variable in fds.Declaration?.Variables)
                                 {
                                     KnownConsts.Add(
                                         (variable.Identifier.Text,
@@ -192,7 +197,7 @@ namespace StringResourceVisualizer
                     }
                     else
                     {
-                        if (vdec.Parent is LocalDeclarationStatementSyntax ldec)
+                        if (vdec.Parent != null && vdec.Parent is LocalDeclarationStatementSyntax ldec)
                         {
                             if (IsConst(ldec))
                             {
