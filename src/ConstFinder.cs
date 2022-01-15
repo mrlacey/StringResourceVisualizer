@@ -186,22 +186,15 @@ namespace StringResourceVisualizer
 
                                 foreach (var variable in fds.Declaration?.Variables)
                                 {
-                                    KnownConsts.Add(
-                                        (variable.Identifier.Text,
-                                         qualification,
-                                         variable.Initializer.Value.ToString().Replace("\\\"", "\""),
-                                         filePath));
+                                    if (variable.Initializer != null)
+                                    {
+                                        KnownConsts.Add(
+                                            (variable.Identifier.Text,
+                                             qualification,
+                                             variable.Initializer.Value.ToString().Replace("\\\"", "\""),
+                                             filePath));
+                                    }
                                 }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (vdec.Parent != null && vdec.Parent is LocalDeclarationStatementSyntax ldec)
-                        {
-                            if (IsConst(ldec))
-                            {
-                                System.Diagnostics.Debug.WriteLine(ldec);
                             }
                         }
                     }

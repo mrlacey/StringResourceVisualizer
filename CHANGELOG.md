@@ -13,6 +13,10 @@ Features that have a checkmark are complete and available for download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.15
+
+- [x] Improve handling of invalid code in editor.
+
 ## 1.14
 
 - [x] Handle internal exception scenario.
