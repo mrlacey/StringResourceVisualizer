@@ -24,7 +24,7 @@ namespace StringResourceVisualizer
     [ProvideAutoLoad(UIContextGuids.SolutionHasMultipleProjects, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [InstalledProductRegistration("#110", "#112", "1.15")] // Info on this package for Help/About
+    [InstalledProductRegistration(Vsix.Name, Vsix.Description, Vsix.Version)] // Info on this package for Help/About
     [ProvideOptionPage(typeof(OptionsGrid), "String Resource Visualizer", "General", 0, 0, true)]
     [Guid(StringResVizPackage.PackageGuidString)]
     public sealed class StringResVizPackage : AsyncPackage
@@ -347,7 +347,17 @@ namespace StringResourceVisualizer
         {
             await OutputPane.Instance?.WriteAsync("Reloading list of resx files.");
 
+            var sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
             var allResxFiles = Directory.EnumerateFiles(slnDirectory, "*.resx", SearchOption.AllDirectories);
+
+            sw.Stop();
+
+            if (sw.Elapsed > TimeSpan.FromSeconds(1))
+            {
+                await OutputPane.Instance.WriteAsync($"Enumerating files took longer than expected: {sw.ElapsedMilliseconds} milliseconds");
+            }
 
             var resxFilesOfInterest = new List<string>();
 

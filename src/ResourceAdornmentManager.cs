@@ -430,6 +430,9 @@ namespace StringResourceVisualizer
                     // Reverse the list to can go through them right-to-left so know if there's anything that might overlap
                     indexes.Reverse();
 
+                    var sw = new System.Diagnostics.Stopwatch();
+                    sw.Start();
+
                     foreach (var matchIndex in indexes)
                     {
                         int endPos = -1;
@@ -561,6 +564,12 @@ namespace StringResourceVisualizer
 
                             this.layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, tag: null, adornment: tb, removedCallback: null);
                         }
+                    }
+
+                    sw.Stop();
+                    if (sw.Elapsed > TimeSpan.FromSeconds(1))
+                    {
+                        await OutputPane.Instance.WriteAsync($"Getting text to display took longer than expected: {sw.ElapsedMilliseconds} milliseconds");
                     }
                 }
             }
