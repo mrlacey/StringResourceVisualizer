@@ -13,6 +13,10 @@ Features that have a checkmark are complete and available for download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.17
+
+- [x] Fix exception when reloading a solution while the package is loading.
+
 ## 1.16
 
 - [x] Added tracking to try and identify the cause of performance issues.

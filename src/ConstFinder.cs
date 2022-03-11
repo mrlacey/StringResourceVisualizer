@@ -32,39 +32,47 @@ namespace StringResourceVisualizer
 
         public static async Task TryParseSolutionAsync(IComponentModel componentModel = null)
         {
-            if (componentModel == null)
+            try
             {
-                componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
-            }
-
-            var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
-
-            if (workspace == null)
-            {
-                return;
-            }
-
-            var projectGraph = workspace.CurrentSolution?.GetProjectDependencyGraph();
-
-            if (projectGraph == null)
-            {
-                return;
-            }
-
-            foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects())
-            {
-                Compilation projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
-
-                if (projectCompilation != null)
+                if (componentModel == null)
                 {
-                    foreach (var compiledTree in projectCompilation.SyntaxTrees)
+                    componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
+                }
+
+                var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
+
+                if (workspace == null)
+                {
+                    return;
+                }
+
+                var projectGraph = workspace.CurrentSolution?.GetProjectDependencyGraph();
+
+                if (projectGraph == null)
+                {
+                    return;
+                }
+
+                foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects())
+                {
+                    Compilation projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
+
+                    if (projectCompilation != null)
                     {
-                        GetConstsFromSyntaxRoot(await compiledTree.GetRootAsync(), compiledTree.FilePath);
+                        foreach (var compiledTree in projectCompilation.SyntaxTrees)
+                        {
+                            GetConstsFromSyntaxRoot(await compiledTree.GetRootAsync(), compiledTree.FilePath);
+                        }
                     }
                 }
-            }
 
-            HasParsedSolution = true;
+                HasParsedSolution = true;
+            }
+            catch (Exception exc)
+            {
+                // Can get NRE from GetProjectDependencyGraph (& possibly other nulls) when a solution is bveing reloaded
+                System.Diagnostics.Debug.WriteLine(exc);
+            }
         }
 
         public static async Task ReloadConstsAsync()
