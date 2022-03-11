@@ -15,7 +15,7 @@ Visual Studio extension that shows the text of a string resource (.resx) when us
 
 ![screenshot](./art/screenshot.png)
 
-The default (language/culture agnostic) resource file is used to find the text to display but you can override this by specifying a **Preferred Culture** in settings. (Got to **Tools > Options > String Resource Visualizer**)
+The default (language/culture agnostic) resource file is used to find the text to display but you can override this by specifying a **Preferred Culture** in settings. (Go to **Tools > Options > String Resource Visualizer**)
 
 ![setting](./art/settings.png)
 
