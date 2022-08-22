@@ -39,7 +39,7 @@ namespace StringResourceVisualizer
         {
             await GeneralOutputPane.Instance.WriteAsync("Sorry to interrupt. I know your time is busy, presumably that's why you installed this extension (String Resource Visualizer).");
             await GeneralOutputPane.Instance.WriteAsync("I'm happy that the extensions I've created have been able to help you and many others");
-            await GeneralOutputPane.Instance.WriteAsync("but I also need to make a living, and two years without work and extended periods of illness have been a challenge. - I didn't qualify for any government support either. :(");
+            await GeneralOutputPane.Instance.WriteAsync("but I also need to make a living, and limited paid work over the last few years has been a challenge. :(");
             await GeneralOutputPane.Instance.WriteAsync(string.Empty);
             await GeneralOutputPane.Instance.WriteAsync("Show your support by making a one-off or recurring donation at https://github.com/sponsors/mrlacey");
             await GeneralOutputPane.Instance.WriteAsync(string.Empty);
