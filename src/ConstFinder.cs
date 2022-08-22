@@ -32,6 +32,9 @@ namespace StringResourceVisualizer
 
         public static async Task TryParseSolutionAsync(IComponentModel componentModel = null)
         {
+            var timer = new System.Diagnostics.Stopwatch();
+            timer.Start();
+
             try
             {
                 if (componentModel == null)
@@ -53,15 +56,21 @@ namespace StringResourceVisualizer
                     return;
                 }
 
+                await Task.Yield();
+
                 foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects())
                 {
                     Compilation projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
+
+                    await Task.Yield();
 
                     if (projectCompilation != null)
                     {
                         foreach (var compiledTree in projectCompilation.SyntaxTrees)
                         {
                             GetConstsFromSyntaxRoot(await compiledTree.GetRootAsync(), compiledTree.FilePath);
+
+                            await Task.Yield();
                         }
                     }
                 }
@@ -72,6 +81,12 @@ namespace StringResourceVisualizer
             {
                 // Can get NRE from GetProjectDependencyGraph (& possibly other nulls) when a solution is bveing reloaded
                 System.Diagnostics.Debug.WriteLine(exc);
+            }
+            finally
+            {
+                timer.Stop();
+
+                await OutputPane.Instance.WriteAsync($"Parse total duration: {timer.Elapsed}");
             }
         }
 
