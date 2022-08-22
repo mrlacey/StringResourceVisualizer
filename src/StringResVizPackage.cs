@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using EnvDTE;
+using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.PlatformUI;
@@ -115,6 +116,7 @@ namespace StringResourceVisualizer
         private void HandleCloseSolution(object sender, EventArgs e)
         {
             ConstFinder.Reset();
+            ResourceAdornmentManager.ClearCache();
         }
 
         private async Task HandleOpenSolutionAsync(CancellationToken cancellationToken)
@@ -141,7 +143,25 @@ namespace StringResourceVisualizer
                 {
                     await OutputPane.Instance?.WriteAsync("No solution file found so attempting to load resources for project file.");
 
-                    fileName = ((dte.ActiveSolutionProjects as Array).GetValue(0) as EnvDTE.Project).FileName;
+                    try
+                    {
+                        fileName = ((dte.ActiveSolutionProjects as Array).GetValue(0) as EnvDTE.Project).FileName;
+                    }
+                    catch (Exception)
+                    {
+                        // Assuming this happens due to openign a csproj file rather than an sln.
+                        await OutputPane.Instance?.WriteAsync("No projects found in ActiveSolution so attempting to load resources for project file.");
+
+                        IVsSolution sol = ServiceProvider.GlobalProvider.GetService(typeof(SVsSolution)) as IVsSolution;
+                        Assumes.Present(sol);
+                        sol.GetProjectFilesInSolution((uint)__VSGETPROJFILESFLAGS.GPFF_SKIPUNLOADEDPROJECTS, 0, null, out uint numProjects);
+                        string[] projects = new string[numProjects];
+                        sol.GetProjectFilesInSolution((uint)__VSGETPROJFILESFLAGS.GPFF_SKIPUNLOADEDPROJECTS, numProjects, projects, out numProjects);
+
+                        // GetProjectFilesInSolution also returns solution folders, so we want to do some filtering
+                        // things that don't exist on disk certainly can't be project files
+                        fileName = projects.First(p => !string.IsNullOrEmpty(p) && System.IO.File.Exists(p));
+                    }
 
                     rootDir = Path.GetDirectoryName(fileName);
                 }
@@ -382,7 +402,7 @@ namespace StringResourceVisualizer
                 }
             }
 
-            await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory, preferredCulture, this.Options);
+            await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory, this.Options);
         }
     }
 }

@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Xml;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
@@ -38,7 +39,19 @@ namespace StringResourceVisualizer
             this.view = view;
             this.layer = view.GetAdornmentLayer("StringResourceCommentLayer");
 
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            if (StringResVizPackage.Instance == null)
+            {
+                // Try and force load the project if it hasn't already loaded
+                // so can access the configured options.
+                if (ServiceProvider.GlobalProvider.GetService(typeof(SVsShell)) is IVsShell shell)
+                {
+                    // IVsPackage package = null;
+                    Guid packageToBeLoadedGuid = new Guid(StringResVizPackage.PackageGuidString);
+                    shell.LoadPackage(ref packageToBeLoadedGuid, out _);
+                }
+            }
 
             this.fileName = this.GetFileName(view.TextBuffer);
 
@@ -67,24 +80,32 @@ namespace StringResourceVisualizer
 
         public static bool SupportNamespaceAliases { get; private set; }
 
+        public static string LocalizationIndicators { get; private set; }
+
         // Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
         // Also use this to identify lines to pad so the textblocks can be seen
         public Dictionary<int, List<(TextBlock textBlock, string resName)>> DisplayedTextBlocks { get; set; } = new Dictionary<int, List<(TextBlock textBlock, string resName)>>();
 
-        public static async Task LoadResourcesAsync(List<string> resxFilesOfInterest, string slnDirectory, string preferredCulture, OptionsGrid options)
+        public static void ClearCache()
         {
-            await TaskScheduler.Default;
-
             ResourcesLoaded = false;
 
             ResourceFiles.Clear();
             SearchValues.Clear();
             XmlDocs.Clear();
+        }
+
+        public static async Task LoadResourcesAsync(List<string> resxFilesOfInterest, string slnDirectory, OptionsGrid options)
+        {
+            await TaskScheduler.Default;
+
+            ClearCache();
 
             // Store this as will need it when looking up which text to use in the adornment.
-            PreferredCulture = preferredCulture;
+            PreferredCulture = options.PreferredCulture;
             SupportAspNetLocalizer = options.SupportAspNetLocalizer;
             SupportNamespaceAliases = options.SupportNamespaceAliases;
+            LocalizationIndicators = options.LocalizationIndicators;
 
             foreach (var resourceFile in resxFilesOfInterest)
             {
@@ -100,10 +121,10 @@ namespace StringResourceVisualizer
 
                     var searchTerm = $"{Path.GetFileNameWithoutExtension(resourceFile)}.";
 
-                    if (!string.IsNullOrWhiteSpace(preferredCulture)
-                     && searchTerm.EndsWith($"{preferredCulture}.", StringComparison.InvariantCultureIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(PreferredCulture)
+                     && searchTerm.EndsWith($"{PreferredCulture}.", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        searchTerm = searchTerm.Substring(0, searchTerm.Length - preferredCulture.Length - 1);
+                        searchTerm = searchTerm.Substring(0, searchTerm.Length - PreferredCulture.Length - 1);
                     }
 
                     if (!SearchValues.Contains(searchTerm))
@@ -329,7 +350,7 @@ namespace StringResourceVisualizer
         /// </summary>
         private async Task CreateVisualsAsync(ITextViewLine line, int lineNumber)
         {
-            const string localizerIndicator = "localizer[";
+            string localizerIndicator = string.Empty;
 
             string GetDisplayTextFromDoc(XmlDocument xDoc, string key)
             {
@@ -410,11 +431,26 @@ namespace StringResourceVisualizer
 
                 var indexes = await lineText.GetAllIndexesAsync(searchArray);
 
-                List<int> localizerIndexes;
+                List<int> localizerIndexes = new List<int>();
 
                 if (SupportAspNetLocalizer)
                 {
-                    localizerIndexes = await lineText.GetAllIndexesCaseInsensitiveAsync(localizerIndicator);
+                    if (!string.IsNullOrWhiteSpace(LocalizationIndicators))
+                    {
+                        foreach (var posIndicator in LocalizationIndicators.Split(';'))
+                        {
+                            if (!string.IsNullOrWhiteSpace(posIndicator))
+                            {
+                                localizerIndexes = await lineText.GetAllIndexesCaseInsensitiveAsync(posIndicator);
+
+                                if (localizerIndexes.Any())
+                                {
+                                    localizerIndicator = posIndicator;
+                                    break;
+                                }
+                            }
+                        }
+                    }
 
                     indexes.AddRange(localizerIndexes);
                 }
@@ -531,7 +567,7 @@ namespace StringResourceVisualizer
                             var brush = new SolidColorBrush(TextForegroundColor);
                             brush.Freeze();
 
-                            var height = (TextSize * Constants.TextBlockSizeToFontScaleFactor) + StringResVizPackage.Instance.Options.TopPadding + StringResVizPackage.Instance.Options.BottomPadding;
+                            var height = (TextSize * Constants.TextBlockSizeToFontScaleFactor) + StringResVizPackage.Instance?.Options.TopPadding ?? 0 + StringResVizPackage.Instance?.Options.BottomPadding ?? 0;
 
                             var tb = new TextBlock
                             {
@@ -540,7 +576,7 @@ namespace StringResourceVisualizer
                                 FontSize = TextSize,
                                 Height = height,
                                 VerticalAlignment = VerticalAlignment.Top,
-                                Padding = new Thickness(0, StringResVizPackage.Instance.Options.TopPadding, 0, 0),
+                                Padding = new Thickness(0, StringResVizPackage.Instance?.Options.TopPadding ?? 0, 0, 0),
                             };
 
                             this.DisplayedTextBlocks[lineNumber].Add((tb, foundText));

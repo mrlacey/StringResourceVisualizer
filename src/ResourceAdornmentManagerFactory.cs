@@ -38,7 +38,7 @@ namespace StringResourceVisualizer
         /// <param name="textView">The <see cref="IWpfTextView"/> upon which the adornment should be placed.</param>
         public void TextViewCreated(IWpfTextView textView)
         {
-            textView.Properties.GetOrCreateSingletonProperty<ResourceAdornmentManager>(() => new ResourceAdornmentManager(textView));
+            textView.Properties.GetOrCreateSingletonProperty(() => new ResourceAdornmentManager(textView));
         }
     }
 }

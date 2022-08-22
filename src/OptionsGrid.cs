@@ -35,6 +35,11 @@ namespace StringResourceVisualizer
         [Description("Attempt to load and show resources used by ILocalizer.")]
         public bool SupportAspNetLocalizer { get; set; } = true;
 
+        [Category("Experimental")]
+        [DisplayName("Localizer Identifiers")]
+        [Description("How to identify ILocalizer usages. Case insensitive. Separate multiple values with a semicolon.")]
+        public string LocalizationIndicators { get; set; } = "localizer[;loc[";
+
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
