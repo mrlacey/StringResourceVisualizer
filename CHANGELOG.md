@@ -13,9 +13,16 @@ Features that have a checkmark are complete and available for download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.19
+
+- [x] Improve support for Razor files.
+- [x] Handle changing solutions without restarting VS.
+- [x] Improve extension loading.
+- [x] Support opening .csproj files directly (not as part of a solution.)
+
 ## 1.18
 
-- [x] Small performance (responsiveness) improvement
+- [x] Small performance (responsiveness) improvement.
 
 ## 1.17
 
