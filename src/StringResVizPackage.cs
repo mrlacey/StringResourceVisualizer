@@ -25,7 +25,7 @@ namespace StringResourceVisualizer
     [ProvideAutoLoad(UICONTEXT.CSharpProject_string, PackageAutoLoadFlags.BackgroundLoad)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration(Vsix.Name, Vsix.Description, Vsix.Version)] // Info on this package for Help/About
-    [ProvideOptionPage(typeof(OptionsGrid), "String Resource Visualizer", "General", 0, 0, true)]
+    [ProvideOptionPage(typeof(OptionsGrid), Vsix.Name, "General", 0, 0, true)]
     [Guid(StringResVizPackage.PackageGuidString)]
     public sealed class StringResVizPackage : AsyncPackage
     {
