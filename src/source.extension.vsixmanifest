@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="StringResourceVisualizer.a05f89b1-98f8-4b37-8f84-4fdebc44aa25" Version="1.19.1" Language="en-US" Publisher="Matt Lacey" />
+        <Identity Id="StringResourceVisualizer.a05f89b1-98f8-4b37-8f84-4fdebc44aa25" Version="1.20" Language="en-US" Publisher="Matt Lacey" />
         <DisplayName>String Resource Visualizer</DisplayName>
         <Description xml:space="preserve">View the text of string resources (.resx) inline when they're used in code.</Description>
         <MoreInfo>https://github.com/mrlacey/StringResourceVisualizer</MoreInfo>
