@@ -17,6 +17,7 @@ using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Threading;
 using static Microsoft.VisualStudio.VSConstants;
 using SolutionEvents = Microsoft.VisualStudio.Shell.Events.SolutionEvents;
 using Task = System.Threading.Tasks.Task;
@@ -366,6 +367,8 @@ namespace StringResourceVisualizer
         private async Task SetOrUpdateListOfResxFilesAsync(string slnDirectory)
         {
             await OutputPane.Instance?.WriteAsync("Reloading list of resx files.");
+
+            await TaskScheduler.Default;
 
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
