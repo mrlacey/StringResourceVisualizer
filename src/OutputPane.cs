@@ -26,7 +26,7 @@ namespace StringResourceVisualizer
             if (ServiceProvider.GlobalProvider.GetService(typeof(SVsOutputWindow)) is IVsOutputWindow outWindow
                 && (ErrorHandler.Failed(outWindow.GetPane(ref dsPaneGuid, out this.pane)) || this.pane == null))
             {
-                if (ErrorHandler.Failed(outWindow.CreatePane(ref dsPaneGuid, "String Resource Visualizer", 1, 0)))
+                if (ErrorHandler.Failed(outWindow.CreatePane(ref dsPaneGuid, Vsix.Name, 1, 0)))
                 {
                     System.Diagnostics.Debug.WriteLine("Failed to create output pane.");
                     return;

@@ -59,7 +59,6 @@
   <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="ConstFinder.cs" />
-    <Compile Include="GeneralOutputPane.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Messenger.cs" />
     <Compile Include="MyLineTransformSource.cs" />
