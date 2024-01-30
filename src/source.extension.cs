@@ -11,7 +11,7 @@ namespace StringResourceVisualizer
         public const string Name = "String Resource Visualizer";
         public const string Description = @"View the text of string resources (.resx) inline when they're used in code.";
         public const string Language = "en-US";
-        public const string Version = "1.20";
+        public const string Version = "1.21";
         public const string Author = "Matt Lacey";
         public const string Tags = "Strings, resources, localization, resx, I18N, ILocalizer";
     }

@@ -13,6 +13,10 @@ Features that have a checkmark are complete and available for download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+# 1.21
+
+- [x] Avoid locking UI when parsing the solution.
+
 # 1.20
 
 - [x] Startup performance improvements.

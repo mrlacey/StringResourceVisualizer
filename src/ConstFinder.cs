@@ -30,8 +30,17 @@ namespace StringResourceVisualizer
             }
         }
 
+        private static bool _parsingInProgress = false;
+
         public static async Task TryParseSolutionAsync(IComponentModel componentModel = null)
         {
+            if (_parsingInProgress)
+            {
+                return;
+            }
+
+            _parsingInProgress = true;
+
             var timer = new System.Diagnostics.Stopwatch();
             timer.Start();
 
@@ -87,6 +96,8 @@ namespace StringResourceVisualizer
                 timer.Stop();
 
                 await OutputPane.Instance.WriteAsync($"Parse total duration: {timer.Elapsed}");
+
+                _parsingInProgress = false;
             }
         }
 
