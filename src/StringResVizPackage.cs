@@ -84,6 +84,8 @@ namespace StringResourceVisualizer
             await this.SetUpRunningDocumentTableEventsAsync(cancellationToken).ConfigureAwait(false);
 
             var componentModel = GetGlobalService(typeof(SComponentModel)) as IComponentModel;
+
+            await OutputPane.Instance.WriteAsync("About to parse solution after package load.");
             await ConstFinder.TryParseSolutionAsync(componentModel);
 
             await this.LoadSystemTextSettingsAsync(cancellationToken);
@@ -207,6 +209,7 @@ namespace StringResourceVisualizer
 
             if (!ConstFinder.HasParsedSolution)
             {
+                await OutputPane.Instance.WriteAsync("About to parse solution due to solution load.");
                 await ConstFinder.TryParseSolutionAsync();
             }
         }

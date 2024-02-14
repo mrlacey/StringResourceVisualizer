@@ -88,7 +88,7 @@ namespace StringResourceVisualizer
             }
             catch (Exception exc)
             {
-                // Can get NRE from GetProjectDependencyGraph (& possibly other nulls) when a solution is bveing reloaded
+                // Can get NRE from GetProjectDependencyGraph (& possibly other nulls) when a solution is being reloaded
                 System.Diagnostics.Debug.WriteLine(exc);
             }
             finally
@@ -127,6 +127,7 @@ namespace StringResourceVisualizer
                 }
                 else
                 {
+                    await OutputPane.Instance.WriteAsync("About to parse solution due to request to reload constants");
                     await ConstFinder.TryParseSolutionAsync(componentModel);
                 }
             }
