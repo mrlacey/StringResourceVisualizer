@@ -85,8 +85,11 @@ namespace StringResourceVisualizer
 
             var componentModel = GetGlobalService(typeof(SComponentModel)) as IComponentModel;
 
-            await OutputPane.Instance.WriteAsync("About to parse solution after package load.");
-            await ConstFinder.TryParseSolutionAsync(componentModel);
+            if (!ConstFinder.HasParsedSolution)
+            {
+                await OutputPane.Instance.WriteAsync("About to parse solution after package load.");
+                await ConstFinder.TryParseSolutionAsync(componentModel);
+            }
 
             await this.LoadSystemTextSettingsAsync(cancellationToken);
 
@@ -393,6 +396,8 @@ namespace StringResourceVisualizer
 
             foreach (var resxFile in allResxFiles)
             {
+                await Task.Yield();
+
                 if (!Path.GetFileNameWithoutExtension(resxFile).Contains("."))
                 {
                     // Neutral language resources, not locale specific ones

@@ -41,8 +41,10 @@ namespace StringResourceVisualizer
 
             _parsingInProgress = true;
 
-            var timer = new System.Diagnostics.Stopwatch();
-            timer.Start();
+            var totalTimer = new System.Diagnostics.Stopwatch();
+            var activeTimer = new System.Diagnostics.Stopwatch();
+            totalTimer.Start();
+            activeTimer.Start();
 
             try
             {
@@ -65,13 +67,17 @@ namespace StringResourceVisualizer
                     return;
                 }
 
+                activeTimer.Stop();
                 await Task.Yield();
+                activeTimer.Start();
 
                 foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects())
                 {
                     Compilation projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
 
+                    activeTimer.Stop();
                     await Task.Yield();
+                    activeTimer.Start();
 
                     if (projectCompilation != null)
                     {
@@ -79,7 +85,9 @@ namespace StringResourceVisualizer
                         {
                             GetConstsFromSyntaxRoot(await compiledTree.GetRootAsync(), compiledTree.FilePath);
 
+                            activeTimer.Stop();
                             await Task.Yield();
+                            activeTimer.Start();
                         }
                     }
                 }
@@ -93,9 +101,10 @@ namespace StringResourceVisualizer
             }
             finally
             {
-                timer.Stop();
+                totalTimer.Stop();
+                activeTimer.Stop();
 
-                await OutputPane.Instance.WriteAsync($"Parse total duration: {timer.Elapsed}");
+                await OutputPane.Instance.WriteAsync($"Parse total duration: {totalTimer.Elapsed} (active = {activeTimer.Elapsed})");
 
                 _parsingInProgress = false;
             }
