@@ -50,4 +50,8 @@ jobs:
         path: /_built/**/*.vsix
 
     - name: Run Tests
-      run: vstest.console.exe  ./src/StringResourceVisualizer.Tests/bin/Debug/StringResourceVisualizer.Tests.dll /Logger:trx
+      uses: microsoft-approved-actions/vstest@master
+        with:
+          testAssembly: StringResourceVisualizer.Tests.dll
+          searchFolder: ./src/StringResourceVisualizer.Tests
+          runInParallel: true
