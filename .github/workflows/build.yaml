@@ -55,3 +55,8 @@ jobs:
         testAssembly: /**/*.Tests.dll
         searchFolder: .
         runInParallel: true
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action/windows@v2
+      with:
+        files: testresults\**\*.trx
