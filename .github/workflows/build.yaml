@@ -52,7 +52,7 @@ jobs:
     - name: Run Tests
       uses: microsoft/vstest-action@v1.0.0
       with:
-        testAssembly: /**/*.Tests.dll
+        testAssembly: /**/bin/**/*.Tests.dll
         searchFolder: .
         runInParallel: true
 
