@@ -51,7 +51,7 @@ jobs:
 
     - name: Run Tests
       uses: microsoft-approved-actions/vstest@master
-        with:
-          testAssembly: StringResourceVisualizer.Tests.dll
-          searchFolder: ./src/StringResourceVisualizer.Tests
-          runInParallel: true
+      with:
+        testAssembly: StringResourceVisualizer.Tests.dll
+        searchFolder: ./src/StringResourceVisualizer.Tests
+        runInParallel: true
