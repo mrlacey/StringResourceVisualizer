@@ -54,7 +54,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\StringResourceVisualizer.csproj">
+    <ProjectReference Include="..\StringResourceVisualizer.csproj">
       <Project>{e71a6e00-d6f7-4401-9515-1dd72701ec57}</Project>
       <Name>StringResourceVisualizer</Name>
     </ProjectReference>
