@@ -92,5 +92,5 @@ jobs:
       uses: andymckay/append-gist-action@6e8d64427fe47cbacf4ab6b890411f1d67c07f3e
       with:
         token: ${{ secrets.GIST_TOKEN }}
-        gistURL: https://gist.githubusercontent.com/{user}/{id}
+        gistURL: https://gist.githubusercontent.com/mrlacey/StringResourceVisualizer
         file: badge.svg
