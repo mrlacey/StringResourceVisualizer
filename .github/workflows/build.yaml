@@ -53,5 +53,5 @@ jobs:
       uses: microsoft/vstest-action@v1.0.0
       with:
         testAssembly: StringResourceVisualizer.Tests.dll
-        searchFolder: ./src/StringResourceVisualizer.Tests
+        searchFolder: ./src/StringResourceVisualizer.Tests/bin/Debug/
         runInParallel: true
