@@ -50,7 +50,7 @@ jobs:
         path: /_built/**/*.vsix
 
     - name: Run Tests
-      uses: microsoft-approved-actions/vstest@master
+      uses: microsoft/vstest@master
       with:
         testAssembly: StringResourceVisualizer.Tests.dll
         searchFolder: ./src/StringResourceVisualizer.Tests
