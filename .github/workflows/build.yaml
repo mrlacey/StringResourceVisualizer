@@ -52,8 +52,8 @@ jobs:
     - name: Run Tests
       uses: microsoft/vstest-action@v1.0.0
       with:
-        testAssembly: /**/*.Tests.dll
-        searchFolder: ./**/bin/**
+        testAssembly: /**/bin/Debug/StringResourceVisualizer.Tests.dll
+        searchFolder: .
         runInParallel: true
 
     - name: Publish Test Results
