@@ -52,10 +52,8 @@ jobs:
     - name: Run Tests
       uses: microsoft/vstest-action@v1.0.0
       with:
-        searchFolder: '.'
-        testAssembly: |
-            ./**/*.Tests.dll
-            !./**/obj/**
+        searchFolder: /_built/
+        testAssembly: /**/*Tests.dll
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action/windows@v2
