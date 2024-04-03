@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "Build"
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      
+jobs:
+  build:
+    outputs:
+      version: ${{ steps.vsix_version.outputs.version-number }}
+    name: Build 
+    runs-on: windows-2022
+    env:
+      Configuration: Debug
+      DeployExtension: False
+      VsixManifestPath: src\source.extension.vsixmanifest
+      VsixManifestSourcePath: src\source.extension.cs
+      
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET build dependencies
+      uses: timheuer/bootstrap-dotnet@v2
+      with:
+        nuget: 'false'
+        sdk: 'false'
+        msbuild: 'true'
+
+    - name: Increment VSIX version
+      id: vsix_version
+      uses: timheuer/vsix-version-stamp@v2
+      with:
+        manifest-file: ${{ env.VsixManifestPath }}
+        vsix-token-source-file: ${{ env.VsixManifestSourcePath }}
+
+    - name: Build
+      run: msbuild /v:m -restore /p:OutDir=\_built
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.event.repository.name }}.vsix
+        path: /_built/**/*.vsix
+
+    - name: Run Tests
+      uses: microsoft/vstest-action@v1.0.0
+      with:
+        searchFolder: /_built/
+        testAssembly: /**/*Tests.dll
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action/windows@v2
+      with:
+        files: testresults\**\*.trx
