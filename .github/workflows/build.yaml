@@ -18,7 +18,7 @@ jobs:
     name: Build 
     runs-on: windows-2022
     env:
-      Configuration: Release
+      Configuration: Debug
       DeployExtension: False
       VsixManifestPath: src\source.extension.vsixmanifest
       VsixManifestSourcePath: src\source.extension.cs
@@ -48,3 +48,6 @@ jobs:
       with:
         name: ${{ github.event.repository.name }}.vsix
         path: /_built/**/*.vsix
+
+    - name: Run Tests
+      run: vstest.console.exe  ./src/StringResourceVisualizer.Tests/bin/Debug/StringResourceVisualizer.Tests.dll /Logger:trx
