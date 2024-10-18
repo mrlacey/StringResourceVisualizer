@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <VsixSignTool>$(NuGetPackageRoot)Microsoft.VSSDK.Vsixsigntool\16.2.29116.78\tools\vssdk\vsixsigntool.exe</VsixSignTool>
-    <VsixSignCommand Condition="Exists('$(VsixSignTool)')">$(VsixSignTool) sign /f $(SIGN_CERTIFICATE) /p $(SIGN_PASSWORD) /sha1 $(SIGN_CERT_HASH) /fd sha256</VsixSignCommand>
-  </PropertyGroup>
-  <Target Name="AfterBuild" DependsOnTargets="CoreCompile" Condition="Exists('$(SIGN_CERTIFICATE)')">
-    <Message Text="Signing $(TargetVsixContainer)" Condition="'$(Configuration)' == 'Release'" />
-    <Exec Command="$(VsixSignCommand) $(MSBuildProjectDirectory)\$(TargetVsixContainer)" Condition="'$(Configuration)' == 'Release'" />
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="AfterBuild" DependsOnTargets="CoreCompile" Condition="'$(SM_CERT_FP_SHA256)' != ''">
+    <Message Text="Signing $(TargetVsixContainer)" Condition="'$(Configuration)' == 'Release'" Importance="High" />
+    <Exec Command="sign code certificate-store -cfp $(SM_CERT_FP_SHA256) -csp &quot;DigiCert Software Trust Manager KSP&quot; -k $(SM_KP) -u &quot;http://timestamp.digicert.com&quot; $(MSBuildProjectDirectory)\$(TargetVsixContainer)" Condition="'$(Configuration)' == 'Release'" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+    </Exec>
+    <Message Text="OutputOfExec: (blank if successful) $(OutputOfExec)" Condition="'$(Configuration)' == 'Release'" Importance="High" />
     <Exec Command="powershell -NonInteractive -executionpolicy Unrestricted -command &quot;&amp; { [XML]$xml = Get-Content .\source.extension.vsixmanifest; $version = $xml.PackageManifest.Metadata.Identity.Version; $verUnder = $version -replace '\.', '_'; $newExt = [System.String]::Concat($verUnder,&apos;.vsix&apos;); $newFileName = &apos;$(TargetVsixContainer)&apos; -Replace &apos;vsix&apos;, $newExt; Copy-Item $(MSBuildProjectDirectory)\$(TargetVsixContainer) -Destination $(MSBuildProjectDirectory)\$newFileName; Write-Host $newFileName; } &quot;" Condition="'$(Configuration)' == 'Release'" />
   </Target>
 </Project>
