@@ -52,7 +52,7 @@ jobs:
     - name: Run Tests
       # See https://github.com/microsoft/vstest-action/issues/31
       # uses: microsoft/vstest-action@v1.0.0
-      uses: josepho0918/vstest-action
+      uses: josepho0918/vstest-action@main
       with:
         searchFolder: /_built/
         testAssembly: /**/*Tests.dll
