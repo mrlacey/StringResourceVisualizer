@@ -95,4 +95,4 @@ jobs:
       with:
         token: ${{ secrets.GIST_TOKEN }}
         gistURL: https://gist.githubusercontent.com/mrlacey/c586ff0f495b4a8dd76ab0dbdf9c89e0
-        file: badge.svg
+        file: StringResourceVisualizer.badge.svg
