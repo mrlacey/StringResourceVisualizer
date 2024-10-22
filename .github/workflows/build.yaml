@@ -91,7 +91,7 @@ jobs:
       if: >
         github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' ||
         github.event_name != 'workflow_run' && github.ref == 'refs/heads/main'
-      uses: andymckay/append-gist-action@6e8d64427fe47cbacf4ab6b890411f1d67c07f3e
+      uses: jpontdia/append-gist-action@main
       with:
         token: ${{ secrets.GIST_TOKEN }}
         gistURL: https://gist.githubusercontent.com/mrlacey/c586ff0f495b4a8dd76ab0dbdf9c89e0
