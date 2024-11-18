@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Target Name="AfterBuild" DependsOnTargets="CoreCompile" Condition="'$(SM_CERT_FP_SHA256)' != ''">
     <Message Text="Signing $(TargetVsixContainer)" Condition="'$(Configuration)' == 'Release'" Importance="High" />
-    <Exec Command="sign code certificate-store -cfp $(SM_CERT_FP_SHA256) -csp &quot;DigiCert Software Trust Manager KSP&quot; -k $(SM_KP) -u &quot;http://timestamp.digicert.com&quot; $(MSBuildProjectDirectory)\$(TargetVsixContainer)" Condition="'$(Configuration)' == 'Release'" ConsoleToMSBuild="true">
+    <Exec Command="sign code certificate-store -cfp $(SM_CERT_FP_SHA256) -csp &quot;DigiCert Software Trust Manager KSP&quot; -k $(SM_KP) -u &quot;http://timestamp.digicert.com&quot; -fl &quot;$(MSBuildProjectDirectory)\filestosign.txt&quot; $(MSBuildProjectDirectory)\$(TargetVsixContainer)" Condition="'$(Configuration)' == 'Release'" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Text="OutputOfExec: (blank if successful) $(OutputOfExec)" Condition="'$(Configuration)' == 'Release'" Importance="High" />
