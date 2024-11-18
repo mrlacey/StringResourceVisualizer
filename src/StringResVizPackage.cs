@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using EnvDTE;
 using Microsoft;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.PlatformUI;
@@ -98,9 +100,44 @@ namespace StringResourceVisualizer
             await SponsorRequestHelper.CheckIfNeedToShowAsync();
 
             Instance = this;
-        }
 
-        private async Task<bool> IsSolutionLoadedAsync(CancellationToken cancellationToken)
+			await TrackBasicUsageAnalyticsAsync();
+		}
+
+		private static async Task TrackBasicUsageAnalyticsAsync()
+		{
+			try
+			{
+#if !DEBUG
+			if (string.IsNullOrWhiteSpace(AnalyticsConfig.TelemetryConnectionString))
+			{
+				return;
+			}
+
+			var config = new TelemetryConfiguration
+			{
+				ConnectionString = AnalyticsConfig.TelemetryConnectionString,
+			};
+
+			var client = new TelemetryClient(config);
+
+			var properties = new Dictionary<string, string>
+				{
+					{ "VsixVersion", Vsix.Version },
+					{ "VsVersion", Microsoft.VisualStudio.Telemetry.TelemetryService.DefaultSession?.GetSharedProperty("VS.Core.ExeVersion") },
+				};
+
+			client.TrackEvent(Vsix.Name, properties);
+#endif
+			}
+			catch (Exception exc)
+			{
+				System.Diagnostics.Debug.WriteLine(exc);
+				await OutputPane.Instance.WriteAsync("Error tracking usage analytics: " + exc.Message);
+			}
+		}
+
+		private async Task<bool> IsSolutionLoadedAsync(CancellationToken cancellationToken)
         {
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
