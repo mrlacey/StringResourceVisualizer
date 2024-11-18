@@ -13,11 +13,17 @@ Features that have a checkmark are complete and available for download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
-# 1.21
+## 1.22
+
+- [x] Update minimum supported version of VS to 17.10
+- [x] Address security vulnerabilities in dependencies.
+- [x] Add basic usage telemetry.
+
+## 1.21
 
 - [x] Avoid locking UI when parsing the solution.
 
-# 1.20
+## 1.20
 
 - [x] Startup performance improvements.
 
