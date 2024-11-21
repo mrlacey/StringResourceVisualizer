@@ -13,6 +13,10 @@ Features that have a checkmark are complete and available for download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.23
+
+- [x] Fix for possible crash when opening files not as part of a project.
+
 ## 1.22
 
 - [x] Update minimum supported version of VS to 17.10
