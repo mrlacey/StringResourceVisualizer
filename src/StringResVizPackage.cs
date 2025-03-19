@@ -168,9 +168,7 @@ namespace StringResourceVisualizer
 		{
 			await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-			await OutputPane.Instance?.WriteAsync("If you have problems, or suggestions for improvement, report them at https://github.com/mrlacey/StringResourceVisualizer/issues/new ");
-			await OutputPane.Instance?.WriteAsync("If you like this extension please leave a review at https://marketplace.visualstudio.com/items?itemName=MattLaceyLtd.StringResourceVisualizer#review-details ");
-			await OutputPane.Instance?.WriteAsync(string.Empty);
+			await OutputPane.Instance.WriteAsync($"{Vsix.Name} v{Vsix.Version}");
 
 			// Get all resource files from the solution
 			// Do this now, rather than in adornment manager for performance and to avoid thread issues
