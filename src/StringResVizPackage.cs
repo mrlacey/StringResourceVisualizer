@@ -433,25 +433,11 @@ namespace StringResourceVisualizer
 
 			await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(CancellationToken.None);
 
-			var preferredCulture = this.Options.PreferredCulture;
-
 			foreach (var resxFile in allResxFiles)
 			{
 				await Task.Yield();
 
-				if (!Path.GetFileNameWithoutExtension(resxFile).Contains("."))
-				{
-					// Neutral language resources, not locale specific ones
-					resxFilesOfInterest.Add(resxFile);
-				}
-				else if (!string.IsNullOrWhiteSpace(preferredCulture))
-				{
-					// Locale specific resource if specified
-					if (Path.GetFileNameWithoutExtension(resxFile).EndsWith($".{preferredCulture}", StringComparison.InvariantCultureIgnoreCase))
-					{
-						resxFilesOfInterest.Add(resxFile);
-					}
-				}
+				resxFilesOfInterest.Add(resxFile);
 			}
 
 			await ResourceAdornmentManager.LoadResourcesAsync(resxFilesOfInterest, slnDirectory, this.Options);

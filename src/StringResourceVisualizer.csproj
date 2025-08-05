@@ -60,6 +60,8 @@
     <Compile Include="AnalyticsConfig.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="ConstFinder.cs" />
+    <Compile Include="CultureInfoHelper.cs" />
+    <Compile Include="DisplayTextContainer.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Messenger.cs" />
     <Compile Include="MyLineTransformSource.cs" />
@@ -82,6 +84,7 @@
     <Compile Include="StringExtensions.cs" />
     <Compile Include="StringResVizPackage.cs" />
     <Compile Include="TaskExtensions.cs" />
+    <Compile Include="XmlResourceFileDescriptor.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\LICENSE">

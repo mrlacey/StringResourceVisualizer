@@ -2,16 +2,8 @@
 // Copyright (c) Matt Lacey. All rights reserved.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Xml;
+using EnvDTE;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
@@ -19,6 +11,17 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Threading;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using Task = System.Threading.Tasks.Task;
 
 namespace StringResourceVisualizer
@@ -28,6 +31,8 @@ namespace StringResourceVisualizer
 	/// </summary>
 	public class ResourceAdornmentManager : IDisposable
 	{
+		public static readonly Brush LocaleNameBrush = new SolidColorBrush(Color.FromRgb(0x56, 0x9c, 0xd6));
+
 		private readonly IAdornmentLayer layer;
 		private readonly IWpfTextView view;
 		private readonly string fileName;
@@ -62,7 +67,7 @@ namespace StringResourceVisualizer
 
 		public static List<string> SearchValues { get; set; } = new List<string>();
 
-		public static List<(string path, XmlDocument xDoc)> XmlDocs { get; private set; } = new List<(string path, XmlDocument xDoc)>();
+		public static List<XmlResourceFileDescriptor> XmlDocs { get; private set; } = new ();
 
 		public static bool ResourcesLoaded { get; private set; }
 
@@ -82,9 +87,9 @@ namespace StringResourceVisualizer
 
 		public static string LocalizationIndicators { get; private set; }
 
-		// Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
-		// Also use this to identify lines to pad so the textblocks can be seen
-		public Dictionary<int, List<(TextBlock textBlock, string resName)>> DisplayedTextBlocks { get; set; } = new Dictionary<int, List<(TextBlock textBlock, string resName)>>();
+		// Keep a record of displayed controls so we can remove them as soon as changed or no longer appropriate
+		// Also use this to identify lines to pad so the controls can be seen
+		public Dictionary<int, List<UIElement>> DisplayedAdornments { get; set; } = new();
 
 		public static void ClearCache()
 		{
@@ -117,12 +122,13 @@ namespace StringResourceVisualizer
 				{
 					extraExceptionDetails = " - before load XmlDocument";
 
-					var doc = new XmlDocument();
-					doc.Load(resourceFile);
+					var rf = await XmlResourceFileDescriptor.CreateAsync(
+						resourceFile
+						);
 
 					extraExceptionDetails = " - after load XmlDocument";
 
-					XmlDocs.Add((resourceFile, doc));
+					XmlDocs.Add(rf);
 
 					extraExceptionDetails = " - after add to XmlDocs";
 
@@ -183,39 +189,6 @@ namespace StringResourceVisualizer
 			}
 
 			ResourcesLoaded = true;
-		}
-
-		public static string FormatDisplayText(string resourceString)
-		{
-			var result = resourceString;
-
-			if (result != null)
-			{
-				var returnIndex = result.IndexOfAny(new[] { '\r', '\n' });
-
-				if (returnIndex == 0)
-				{
-					result = result.TrimStart(' ', '\r', '\n');
-					returnIndex = result.IndexOfAny(new[] { '\r', '\n' });
-
-					if (returnIndex >= 0)
-					{
-						// Truncate at first wrapping character and add "Return Character" to indicate truncation
-						result = "⏎" + result.Substring(0, returnIndex) + "⏎";
-					}
-					else
-					{
-						result = "⏎" + result;
-					}
-				}
-				else if (returnIndex > 0)
-				{
-					// Truncate at first wrapping character and add "Return Character" to indicate truncation
-					result = result.Substring(0, returnIndex) + "⏎";
-				}
-			}
-
-			return result;
 		}
 
 		public string GetFileName(ITextBuffer textBuffer)
@@ -298,9 +271,9 @@ namespace StringResourceVisualizer
 
 			for (var i = 0; i < XmlDocs.Count; i++)
 			{
-				var (path, _) = XmlDocs[i];
+				var f = XmlDocs[i];
 
-				if (path == filePath)
+				if (f.Path == filePath)
 				{
 					// File may still be locked after being moved/renamed/updated
 					// Allow for retry after delay with back-off.
@@ -313,10 +286,7 @@ namespace StringResourceVisualizer
 								await Task.Delay(attempted * baseWaitPeriod);
 							}
 
-							var doc = new XmlDocument();
-							doc.Load(filePath);
-
-							XmlDocs[i] = (path, doc);
+							f.Reload();
 						}
 						catch (Exception ex)
 						{
@@ -370,26 +340,6 @@ namespace StringResourceVisualizer
 		/// </summary>
 		private async Task CreateVisualsAsync(ITextViewLine line, int lineNumber)
 		{
-			string localizerIndicator = string.Empty;
-
-			string GetDisplayTextFromDoc(XmlDocument xDoc, string key)
-			{
-				string result = null;
-
-				foreach (XmlElement element in xDoc.GetElementsByTagName("data"))
-				{
-					if (element.GetAttribute("name") == key)
-					{
-						var valueElement = element.GetElementsByTagName("value").Item(0);
-						result = FormatDisplayText(valueElement?.InnerText);
-
-						break;
-					}
-				}
-
-				return result;
-			}
-
 			// TODO: Cache text retrieved from the resource file based on fileName and key. - Invalidate the cache when reload resource files. This will save querying the XMLDocument each time.
 			try
 			{
@@ -439,194 +389,83 @@ namespace StringResourceVisualizer
 
 				// Remove any textblocks displayed on this line so it won't conflict with anything we add below.
 				// Handles no textblocks to show or the text to display having changed.
-				if (this.DisplayedTextBlocks.ContainsKey(lineNumber))
+				if (this.DisplayedAdornments.ContainsKey(lineNumber))
 				{
-					foreach (var (textBlock, _) in this.DisplayedTextBlocks[lineNumber])
+					foreach (var textBlock in this.DisplayedAdornments[lineNumber])
 					{
 						this.layer.RemoveAdornment(textBlock);
 					}
 
-					this.DisplayedTextBlocks.Remove(lineNumber);
+					this.DisplayedAdornments.Remove(lineNumber);
 				}
 
 				var indexes = await lineText.GetAllIndexesAsync(searchArray);
 
-				List<int> localizerIndexes = new List<int>();
+				var (localizerIndicator, localizerIndexes) = await BuildLocalizerIndexesAsync(
+					lineText
+					);
+				indexes.AddRange(localizerIndexes);
 
-				if (SupportAspNetLocalizer)
+
+				if (!indexes.Any())
 				{
-					if (!string.IsNullOrWhiteSpace(LocalizationIndicators))
-					{
-						foreach (var posIndicator in LocalizationIndicators.Split(';'))
-						{
-							if (!string.IsNullOrWhiteSpace(posIndicator))
-							{
-								localizerIndexes = await lineText.GetAllIndexesCaseInsensitiveAsync(posIndicator);
-
-								if (localizerIndexes.Any())
-								{
-									localizerIndicator = posIndicator;
-									break;
-								}
-							}
-						}
-					}
-
-					indexes.AddRange(localizerIndexes);
-				}
-				else
-				{
-					localizerIndexes = new List<int>();
+					return;
 				}
 
-				if (indexes.Any())
+				var lastLeft = double.NaN;
+
+				// Reverse the list to can go through them right-to-left so know if there's anything that might overlap
+				indexes.Reverse();
+
+				var sw = new System.Diagnostics.Stopwatch();
+				sw.Start();
+
+				var preferredCulture = await CultureInfoHelper.CreateCultureByNameAsync(PreferredCulture);
+				foreach (var matchIndex in indexes)
 				{
-					var lastLeft = double.NaN;
+					// If the localizer setting isn't enabled this definitely wont match.
+					(List<XmlResourceFileDescriptor> docsOfInterest, string resourceName) = GetDocsOfInterest(
+						localizerIndicator,
+						lineText,
+						localizerIndexes,
+						preferredCulture,
+						matchIndex
+						);
 
-					// Reverse the list to can go through them right-to-left so know if there's anything that might overlap
-					indexes.Reverse();
+					var dtc = DisplayTextContainer.Create(docsOfInterest, resourceName);
 
-					var sw = new System.Diagnostics.Stopwatch();
-					sw.Start();
-
-					foreach (var matchIndex in indexes)
+					if (!this.DisplayedAdornments.ContainsKey(lineNumber))
 					{
-						int endPos = -1;
-						string foundText = string.Empty;
-						string displayText = null;
-
-						// If the localizer setting isn't enabled this definitely wont match.
-						if (localizerIndexes.Contains(matchIndex))
-						{
-							var lineSearchStart = matchIndex + localizerIndicator.Length;
-
-							var locClosingPos = lineText.IndexOf(']', lineSearchStart);
-
-							var locKey = lineText.Substring(lineSearchStart, locClosingPos - lineSearchStart);
-
-							if (locKey.StartsWith("\""))
-							{
-								var closingQuotePos = lineText.IndexOf('"', lineSearchStart + 1);
-
-								if (closingQuotePos > -1)
-								{
-									foundText = lineText.Substring(lineSearchStart + 1, closingQuotePos - lineSearchStart - 1);
-								}
-							}
-							else
-							{
-								// key is a constant so need to look up the value
-								var lastDot = locKey.LastIndexOf('.');
-
-								var qualifier = string.Empty;
-								var constName = locKey;
-
-								if (lastDot >= 0)
-								{
-									qualifier = locKey.Substring(0, lastDot);
-									constName = locKey.Substring(lastDot + 1);
-								}
-
-								foundText = ConstFinder.GetDisplayText(constName, qualifier, this.fileName).Trim('"');
-							}
-
-							if (!string.IsNullOrEmpty(foundText))
-							{
-								foreach (var xDoc in this.GetLocalizerDocsOfInterest(this.fileName, XmlDocs, PreferredCulture))
-								{
-									displayText = GetDisplayTextFromDoc(xDoc, foundText);
-
-									if (!string.IsNullOrWhiteSpace(displayText))
-									{
-										break;
-									}
-								}
-							}
-						}
-						else
-						{
-							endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '{', '}', ';' }, lineText.IndexOf('.', matchIndex) + 1);
-
-							foundText = endPos > matchIndex
-								? lineText.Substring(matchIndex, endPos - matchIndex)
-								: lineText.Substring(matchIndex);
-
-							var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
-							var fileBaseName = foundText.Substring(0, foundText.IndexOf('.'));
-
-							if (SupportNamespaceAliases)
-							{
-								// Look for alias use
-								var alias = this.aliases.FirstOrDefault(a => a.alias == $"{fileBaseName}.");
-
-								if (alias.resName != null)
-								{
-									// Substitute for the value the alias represents.
-									fileBaseName = alias.resName.Replace(".", string.Empty);
-								}
-							}
-
-							foreach (var (_, xDoc) in this.GetDocsOfInterest(fileBaseName, XmlDocs, PreferredCulture))
-							{
-								displayText = GetDisplayTextFromDoc(xDoc, resourceName);
-
-								if (!string.IsNullOrWhiteSpace(displayText))
-								{
-									break;
-								}
-							}
-						}
-
-						if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
-						{
-							this.DisplayedTextBlocks.Add(lineNumber, new List<(TextBlock textBlock, string resName)>());
-						}
-
-						if (!string.IsNullOrWhiteSpace(displayText) && TextSize > 0)
-						{
-							var brush = new SolidColorBrush(TextForegroundColor);
-							brush.Freeze();
-
-							var height = (TextSize * Constants.TextBlockSizeToFontScaleFactor) + StringResVizPackage.Instance?.Options.TopPadding ?? 0 + StringResVizPackage.Instance?.Options.BottomPadding ?? 0;
-
-							var tb = new TextBlock
-							{
-								Foreground = brush,
-								Text = $"\"{displayText}\"",
-								FontSize = TextSize,
-								Height = height,
-								VerticalAlignment = VerticalAlignment.Top,
-								Padding = new Thickness(0, StringResVizPackage.Instance?.Options.TopPadding ?? 0, 0, 0),
-							};
-
-							this.DisplayedTextBlocks[lineNumber].Add((tb, foundText));
-
-							// Get coordinates of text
-							int start = line.Extent.Start.Position + matchIndex;
-							int end = line.Start + (line.Extent.Length - 1);
-							var span = new SnapshotSpan(this.view.TextSnapshot, Span.FromBounds(start, end));
-							var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);
-
-							if (!double.IsNaN(lastLeft))
-							{
-								tb.MaxWidth = lastLeft - lineGeometry.Bounds.Left - 5; // Minus 5 for padding
-								tb.TextTrimming = TextTrimming.CharacterEllipsis;
-							}
-
-							Canvas.SetLeft(tb, lineGeometry.Bounds.Left);
-							Canvas.SetTop(tb, line.TextTop - tb.Height);
-
-							lastLeft = lineGeometry.Bounds.Left;
-
-							this.layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, tag: null, adornment: tb, removedCallback: null);
-						}
+						this.DisplayedAdornments.Add(lineNumber, new());
 					}
 
-					sw.Stop();
-					if (sw.Elapsed > TimeSpan.FromSeconds(1))
+					if (!dtc.IsEmpty && TextSize > 0)
 					{
-						await OutputPane.Instance.WriteAsync($"Getting text to display took longer than expected: {sw.ElapsedMilliseconds} milliseconds");
+						var adornmentControl = CreateAdornmentControl(
+							line,
+							lineNumber,
+							ref lastLeft,
+							matchIndex,
+							dtc,
+							preferredCulture ?? CultureInfo.CurrentUICulture
+							);
+
+						this.DisplayedAdornments[lineNumber].Add(adornmentControl);
+
+						this.layer.AddAdornment(
+							AdornmentPositioningBehavior.TextRelative,
+							line.Extent,
+							tag: null,
+							adornment: adornmentControl,
+							removedCallback: null
+							);
 					}
+				}
+
+				sw.Stop();
+				if (sw.Elapsed > TimeSpan.FromSeconds(1))
+				{
+					await OutputPane.Instance.WriteAsync($"Getting text to display took longer than expected: {sw.ElapsedMilliseconds} milliseconds");
 				}
 			}
 			catch (Exception ex)
@@ -638,22 +477,223 @@ namespace StringResourceVisualizer
 			}
 		}
 
-		private IEnumerable<(string path, XmlDocument xDoc)> GetDocsOfInterest(string resourceBaseName, List<(string path, XmlDocument xDoc)> xmlDocs, string preferredCulture)
+		private static async Task<(string localizerIndicator, List<int> localizerIndexes)> BuildLocalizerIndexesAsync(
+			string lineText
+			)
 		{
-			// As may be multiple resource files, only check the ones which have the correct name.
-			// If multiple projects in the solutions with same resource name (file & name), but different res value, the wrong value *may* be displayed
-			// Get preferred cutlure files first
-			if (!string.IsNullOrWhiteSpace(preferredCulture))
+			if (!SupportAspNetLocalizer)
 			{
-				var cultureDocs = xmlDocs.Where(x => Path.GetFileNameWithoutExtension(x.path).Equals($"{resourceBaseName}.{preferredCulture}", StringComparison.InvariantCultureIgnoreCase));
-				foreach (var item in cultureDocs)
+				return (string.Empty, []);
+			}
+
+			var localizerIndicator = string.Empty;
+			var localizerIndexes = new List<int>();
+			if (!string.IsNullOrWhiteSpace(LocalizationIndicators))
+			{
+				foreach (var posIndicator in LocalizationIndicators.Split(';'))
 				{
-					yield return item;
+					if (!string.IsNullOrWhiteSpace(posIndicator))
+					{
+						localizerIndexes = await lineText.GetAllIndexesCaseInsensitiveAsync(posIndicator);
+
+						if (localizerIndexes.Any())
+						{
+							localizerIndicator = posIndicator;
+							break;
+						}
+					}
 				}
 			}
 
-			// Then default resource files
-			var defaultResources = xmlDocs.Where(x => Path.GetFileNameWithoutExtension(x.path).Equals(resourceBaseName));
+			return (localizerIndicator, localizerIndexes);
+		}
+
+		private (List<XmlResourceFileDescriptor>, string) GetDocsOfInterest(
+			string localizerIndicator,
+			string lineText,
+			List<int> localizerIndexes,
+			CultureInfo? preferredCulture,
+			int matchIndex
+			)
+		{
+			int endPos = -1;
+
+			if (localizerIndexes.Contains(matchIndex))
+			{
+				var lineSearchStart = matchIndex + localizerIndicator.Length;
+
+				var locClosingPos = lineText.IndexOf(']', lineSearchStart);
+
+				var locKey = lineText.Substring(lineSearchStart, locClosingPos - lineSearchStart);
+
+				var foundText = DetermineFoundText(
+					lineText,
+					lineSearchStart,
+					locKey
+					) ?? string.Empty;
+
+				if (!string.IsNullOrEmpty(foundText))
+				{
+					var docsOfInterest = this.GetLocalizerDocsOfInterest(this.fileName, XmlDocs, PreferredCulture)
+						.ToList()
+						;
+					return (docsOfInterest, foundText);
+				}
+			}
+			else
+			{
+				endPos = lineText.IndexOfAny(new[] { ' ', '.', ',', '"', '(', ')', '{', '}', ';' }, lineText.IndexOf('.', matchIndex) + 1);
+
+				var foundText = endPos > matchIndex
+					? lineText.Substring(matchIndex, endPos - matchIndex)
+					: lineText.Substring(matchIndex);
+
+				var fileBaseName = foundText.Substring(0, foundText.IndexOf('.'));
+
+				if (SupportNamespaceAliases)
+				{
+					// Look for alias use
+					var alias = this.aliases.FirstOrDefault(a => a.alias == $"{fileBaseName}.");
+
+					if (alias.resName != null)
+					{
+						// Substitute for the value the alias represents.
+						fileBaseName = alias.resName.Replace(".", string.Empty);
+					}
+				}
+
+				var resourceName = foundText.Substring(foundText.IndexOf('.') + 1);
+				var docsOfInterest = this.GetDocsOfInterest(
+					fileBaseName,
+					XmlDocs
+					)
+					.ToList()
+					;
+				return (docsOfInterest, resourceName);
+			}
+
+			return ([], string.Empty);
+		}
+
+		private string? DetermineFoundText(
+			string lineText,
+			int lineSearchStart,
+			string locKey
+			)
+		{
+			if (locKey.StartsWith("\""))
+			{
+				var closingQuotePos = lineText.IndexOf('"', lineSearchStart + 1);
+
+				if (closingQuotePos > -1)
+				{
+					return lineText.Substring(lineSearchStart + 1, closingQuotePos - lineSearchStart - 1);
+				}
+			}
+			else
+			{
+				// key is a constant so need to look up the value
+				var lastDot = locKey.LastIndexOf('.');
+
+				var qualifier = string.Empty;
+				var constName = locKey;
+
+				if (lastDot >= 0)
+				{
+					qualifier = locKey.Substring(0, lastDot);
+					constName = locKey.Substring(lastDot + 1);
+				}
+
+				return ConstFinder.GetDisplayText(constName, qualifier, this.fileName).Trim('"');
+			}
+
+			return null;
+		}
+
+		//TODO: it's a good time to switch to XAML based UserControl instead of C# based logic
+		private UIElement CreateAdornmentControl(
+			ITextViewLine line,
+			int lineNumber,
+			ref double lastLeft,
+			int matchIndex,
+			DisplayTextContainer dtc,
+			CultureInfo preferredCulture
+			)
+		{
+			// Get coordinates of text
+			int start = line.Extent.Start.Position + matchIndex;
+			int end = line.Start + (line.Extent.Length - 1);
+			var span = new SnapshotSpan(this.view.TextSnapshot, Span.FromBounds(start, end));
+			var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);
+
+			var brush = new SolidColorBrush(TextForegroundColor);
+			brush.Freeze();
+
+			var height = (TextSize * Constants.TextBlockSizeToFontScaleFactor) + StringResVizPackage.Instance?.Options.TopPadding ?? 0 + StringResVizPackage.Instance?.Options.BottomPadding ?? 0;
+
+			var tbMain = new TextBlock
+			{
+				Foreground = brush,
+				Text = $"\"{dtc.GetDisplayText(preferredCulture)}\"",
+				FontSize = TextSize,
+				Height = height,
+				VerticalAlignment = VerticalAlignment.Top,
+				Padding = new Thickness(0, StringResVizPackage.Instance?.Options.TopPadding ?? 0, 0, 0),
+			};
+
+			if (!double.IsNaN(lastLeft))
+			{
+				tbMain.MaxWidth = lastLeft - lineGeometry.Bounds.Left - 5; // Minus 5 for padding
+				tbMain.TextTrimming = TextTrimming.CharacterEllipsis;
+			}
+
+			lastLeft = lineGeometry.Bounds.Left;
+
+			var tbls = new List<TextBlock>();
+			foreach (var (localeName, displayText) in dtc.Enumerate())
+			{
+
+				var tbl = new TextBlock
+				{
+					Foreground = LocaleNameBrush,
+					Cursor = Cursors.Hand,
+					Text = localeName,
+					FontSize = TextSize,
+					Height = height,
+					VerticalAlignment = VerticalAlignment.Top,
+					TextDecorations = System.Windows.TextDecorations.Underline,
+					Margin = new Thickness(5, 0, 0, 0),
+					Padding = new Thickness(0, StringResVizPackage.Instance?.Options.TopPadding ?? 0, 0, 0),
+				};
+				tbl.MouseLeftButtonUp += (sender, e) =>
+				{
+					tbMain.Text = $"\"{displayText}\"";
+				};
+
+				tbls.Add(tbl);
+			}
+
+
+			var sp = new StackPanel
+			{
+				Orientation = Orientation.Horizontal,
+				Height = height,
+				VerticalAlignment = VerticalAlignment.Top,
+			};
+			sp.Children.Add(tbMain);
+			tbls.ForEach(tbl => sp.Children.Add(tbl));
+
+			Canvas.SetLeft(sp, lineGeometry.Bounds.Left);
+			Canvas.SetTop(sp, line.TextTop - sp.Height);
+			return sp;
+		}
+
+		private IEnumerable<XmlResourceFileDescriptor> GetDocsOfInterest(
+			string resourceBaseName,
+			List<XmlResourceFileDescriptor> xmlDocs
+			)
+		{
+			var defaultResources = xmlDocs.FindAll(x => x.FileNameWithoutCultureAndExtension == resourceBaseName);
 			foreach (var item in defaultResources)
 			{
 				yield return item;
@@ -663,9 +703,13 @@ namespace StringResourceVisualizer
 		/// <summary>
 		/// Get list of resource docs that are most likely to match based on naming & folder structure.
 		/// </summary>
-		private IEnumerable<XmlDocument> GetLocalizerDocsOfInterest(string filePathName, List<(string path, XmlDocument xDoc)> xmlDocs, string preferredCulture)
+		private IEnumerable<XmlResourceFileDescriptor> GetLocalizerDocsOfInterest(
+			string filePathName,
+			List<XmlResourceFileDescriptor> xmlDocs,
+			string preferredCulture
+			)
 		{
-			var filteredXmlDocs = new List<(string resPath, string codePath, XmlDocument xDoc)>();
+			var filteredXmlDocs = new List<(string resPath, string codePath, XmlResourceFileDescriptor file)>();
 
 			// Rationalize paths that may be based on folders or dotted file names by converting dots to directory separators and treat all as folders
 			// strip matching starts and then do a reverse match on the rationalized paths
@@ -693,16 +737,16 @@ namespace StringResourceVisualizer
 
 			var uniqueRelativeCodePaths = new List<string>();
 
-			foreach (var (xdocPath, fxDoc) in xmlDocs)
+			foreach (var file in xmlDocs)
 			{
-				var (stripedResPath, strippedCodePath) = StripMatchingStart(xdocPath, filePathName);
+				var (stripedResPath, strippedCodePath) = StripMatchingStart(file.Path, filePathName);
 
 				if (!uniqueRelativeCodePaths.Contains(strippedCodePath))
 				{
 					uniqueRelativeCodePaths.Add(strippedCodePath);
 				}
 
-				filteredXmlDocs.Add((stripedResPath, strippedCodePath, fxDoc));
+				filteredXmlDocs.Add((stripedResPath, strippedCodePath, file));
 			}
 
 			var rawName = Path.GetFileNameWithoutExtension(filePathName);
@@ -723,7 +767,7 @@ namespace StringResourceVisualizer
 					if (!string.IsNullOrWhiteSpace(wcs.resPath))
 					{
 						pathsOfDocsReturned.Add(wcs.resPath);
-						yield return wcs.xDoc;
+						yield return wcs.file;
 					}
 
 					var withCultureFolder = Path.Combine(string.Join("\\", rawParts.Take(i)), preferredCulture, rawName);
@@ -734,7 +778,7 @@ namespace StringResourceVisualizer
 					if (!string.IsNullOrWhiteSpace(wcf.resPath))
 					{
 						pathsOfDocsReturned.Add(wcf.resPath);
-						yield return wcf.xDoc;
+						yield return wcf.file;
 					}
 
 					var withoutCulture = Path.Combine(string.Join("\\", rawParts.Take(i)), rawName);
@@ -745,18 +789,18 @@ namespace StringResourceVisualizer
 					if (!string.IsNullOrWhiteSpace(wc.resPath))
 					{
 						pathsOfDocsReturned.Add(wc.resPath);
-						yield return wc.xDoc;
+						yield return wc.file;
 					}
 				}
 			}
 
-			// In case we haven't found the relevant file above (acutal file naming doesn't match expectations),
+			// In case we haven't found the relevant file above (actual file naming doesn't match expectations),
 			// return the others to avoid not finding it at all.
 			foreach (var fxd in filteredXmlDocs)
 			{
 				if (!pathsOfDocsReturned.Contains(fxd.resPath))
 				{
-					yield return fxd.xDoc;
+					yield return fxd.file;
 				}
 			}
 		}

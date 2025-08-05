@@ -12,10 +12,8 @@ A [Visual Studio extension](https://marketplace.visualstudio.com/items?itemName=
 
 ![screenshot](./art/screenshot.png)
 
-The default (language/culture agnostic) resource file is used to find the text to display but you can override this by specifying a **Preferred Culture** in settings. (Go to **Tools > Options > String Resource Visualizer**)
+The current UI culture resource file is used to find the text to display but you can override this by specifying a **Preferred Culture** in settings. (Go to **Tools > Options > String Resource Visualizer**)
 
 ![setting](./art/settings.png)
-
-If a string is not specified for the preferred culture, the default value is used instead.
 
 See the [change log](CHANGELOG.md) for changes and road map.

@@ -46,7 +46,7 @@ namespace StringResourceVisualizer.Tests
 
         private void TestIt(string input, string expected)
         {
-            var actual = ResourceAdornmentManager.FormatDisplayText(input);
+            var actual = DisplayTextContainer.FormatDisplayText(input);
 
             Assert.AreEqual(expected, actual);
         }

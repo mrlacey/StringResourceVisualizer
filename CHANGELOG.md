@@ -13,6 +13,10 @@ Features that have a checkmark are complete and available for download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.24
+
+- [x] Added UI controls to show the localized version of string resources instead the default ones.
+
 ## 1.23.1
 
 - [x] Increased logging on exceptions to try and identify the cause of resource load failures.
