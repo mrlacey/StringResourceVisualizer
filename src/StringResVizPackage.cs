@@ -270,7 +270,7 @@ namespace StringResourceVisualizer
 		private void WatchForSolutionOrProjectChanges(string solutionFileName)
 		{
 			// It might actually be the project file name if no solution file exists
-			if (solutionFileName.EndsWith(".sln", StringComparison.InvariantCultureIgnoreCase))
+			if (solutionFileName.IsSolutionFileName())
 			{
 				this.SlnWatcher.Filter = Path.GetFileName(solutionFileName);
 				this.SlnWatcher.Path = Path.GetDirectoryName(solutionFileName);
@@ -315,7 +315,7 @@ namespace StringResourceVisualizer
 			try
 			{
 				// Don't want to know about temporary files created during save.
-				if (e.FullPath.EndsWith(".sln"))
+				if (e.FullPath.IsSolutionFileName())
 				{
 					await this.SetOrUpdateListOfResxFilesAsync(Path.GetDirectoryName(e.FullPath));
 				}

@@ -11,6 +11,16 @@ namespace StringResourceVisualizer
 {
     public static class StringExtensions
     {
+        /// <summary>
+        /// Whether a file name is that of a Visual Studio solution file: the .sln format or the newer, XML based, .slnx format.
+        /// </summary>
+        public static bool IsSolutionFileName(this string fileName)
+        {
+            return !string.IsNullOrEmpty(fileName)
+                && (fileName.EndsWith(".sln", StringComparison.InvariantCultureIgnoreCase)
+                    || fileName.EndsWith(".slnx", StringComparison.InvariantCultureIgnoreCase));
+        }
+
         public static async Task<int> IndexOfAnyAsync(this string source, params string[] values)
         {
             try
