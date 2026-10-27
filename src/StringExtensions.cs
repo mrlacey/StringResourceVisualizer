@@ -11,6 +11,12 @@ namespace StringResourceVisualizer
 {
     public static class StringExtensions
     {
+        /// <summary>
+        /// Finds where the first of the values occurs in a text.
+        /// </summary>
+        /// <param name="source">The text to search.</param>
+        /// <param name="values">The values to look for. A value can be in the array more than once.</param>
+        /// <returns>The index of the earliest occurrence of any of the values, or -1 if none of them occurs.</returns>
         public static async Task<int> IndexOfAnyAsync(this string source, params string[] values)
         {
             try
@@ -25,7 +31,9 @@ namespace StringResourceVisualizer
 
                 if (valuePositions.Any(v => v.Value > -1))
                 {
-                    var result = valuePositions.Where(v => v.Value > -1).OrderByDescending(v => v.Key.Length).FirstOrDefault().Value;
+                    // The earliest occurrence counts, whatever the length of the value.
+                    // Using the longest value that occurs anywhere in the text would skip a shorter one that comes before it.
+                    var result = valuePositions.Where(v => v.Value > -1).Min(v => v.Value);
 
                     return result;
                 }
@@ -43,6 +51,12 @@ namespace StringResourceVisualizer
             return -1;
         }
 
+        /// <summary>
+        /// Finds where each of the values occurs in a text.
+        /// </summary>
+        /// <param name="source">The text to search.</param>
+        /// <param name="values">The values to look for.</param>
+        /// <returns>The index of every occurrence of any of the values, from left to right.</returns>
         public static async Task<List<int>> GetAllIndexesAsync(this string source, params string[] values)
         {
             var result = new List<int>();
