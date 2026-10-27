@@ -57,42 +57,20 @@ jobs:
         searchFolder: /_built/
         testAssembly: /**/*Tests.dll
 
-    - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action/windows@v2
-      id: test-results
+    # The results are published by publish-test-results.yml. It runs after this workflow with write access, so that it
+    # also works for pull requests from forks, which get a read-only token here.
+    - name: Upload test results
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
       with:
-        files: testresults\**\*.trx
+        name: test-results-${{ runner.os }}
+        path: testresults/**/*.trx
+        if-no-files-found: warn
 
-    - name: Set badge color
-      shell: bash
-      run: |
-        case ${{ fromJSON( steps.test-results.outputs.json ).conclusion }} in
-          success)
-            echo "BADGE_COLOR=31c653" >> $GITHUB_ENV
-            ;;
-          failure)
-            echo "BADGE_COLOR=800000" >> $GITHUB_ENV
-            ;;
-          neutral)
-            echo "BADGE_COLOR=696969" >> $GITHUB_ENV
-            ;;
-        esac
-
-    - name: Create badge
-      uses: emibcn/badge-action@808173dd03e2f30c980d03ee49e181626088eee8
+    # The publishing workflow does not run in the context of the pull request, so it needs the event to find it.
+    - name: Upload event file
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
       with:
-        label: Tests
-        status: '${{ fromJSON( steps.test-results.outputs.json ).formatted.stats.tests }} tests: ${{ fromJSON( steps.test-results.outputs.json ).conclusion }}'
-        color: ${{ env.BADGE_COLOR }}
-        path: StringResourceVisualizer.badge.svg
-
-    - name: Upload badge to Gist
-      # Upload only for main branch
-      if: >
-        github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' ||
-        github.event_name != 'workflow_run' && github.ref == 'refs/heads/main'
-      uses: jpontdia/append-gist-action@master
-      with:
-        token: ${{ secrets.GIST_TOKEN }}
-        gistURL: https://gist.githubusercontent.com/mrlacey/c586ff0f495b4a8dd76ab0dbdf9c89e0
-        file: StringResourceVisualizer.badge.svg
+        name: EventFile
+        path: ${{ github.event_path }}

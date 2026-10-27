@@ -1,0 +1,99 @@
+# Publishes the test results of the "Build" workflow: the comment on the pull request, the check and the badge.
+# It is a separate workflow because the build has a read-only token for pull requests from forks, and because the
+# action needs Python, which the Ubuntu image has and the Windows one of the build does not.
+name: Publish Test Results
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  test-results:
+    name: Test Results
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'skipped'
+
+    permissions:
+      actions: read
+      checks: write
+      pull-requests: write
+
+    steps:
+    - name: Download event file
+      uses: dawidd6/action-download-artifact@v6
+      with:
+        run_id: ${{ github.event.workflow_run.id }}
+        path: artifacts
+        name: EventFile
+
+    - name: Download test results
+      uses: dawidd6/action-download-artifact@v6
+      with:
+        run_id: ${{ github.event.workflow_run.id }}
+        path: test-results
+        name: ^test-results-.*
+        name_is_regexp: true
+        if_no_artifact_found: warn
+
+    - name: Resolve event file path
+      id: event_file
+      shell: pwsh
+      run: |
+        $eventFilePath =
+          Get-ChildItem -Path artifacts -Filter event.json -Recurse |
+          Select-Object -First 1 -ExpandProperty FullName
+
+        if ($null -eq $eventFilePath) {
+          throw "event.json file was not found in downloaded artifacts"
+        }
+
+        "path=$eventFilePath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+    - name: Publish Test Results
+      id: test-results
+      if: ${{ hashFiles('test-results/**/*.trx') != '' }}
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        commit: ${{ github.event.workflow_run.head_sha }}
+        comment_mode: always
+        event_file: ${{ steps.event_file.outputs.path }}
+        event_name: ${{ github.event.workflow_run.event }}
+        files: "test-results/**/*.trx"
+
+    - name: Set badge color
+      if: ${{ steps.test-results.outcome == 'success' }}
+      shell: bash
+      run: |
+        case ${{ fromJSON( steps.test-results.outputs.json ).conclusion }} in
+          success)
+            echo "BADGE_COLOR=31c653" >> $GITHUB_ENV
+            ;;
+          failure)
+            echo "BADGE_COLOR=800000" >> $GITHUB_ENV
+            ;;
+          neutral)
+            echo "BADGE_COLOR=696969" >> $GITHUB_ENV
+            ;;
+        esac
+
+    - name: Create badge
+      if: ${{ steps.test-results.outcome == 'success' }}
+      uses: emibcn/badge-action@808173dd03e2f30c980d03ee49e181626088eee8
+      with:
+        label: Tests
+        status: '${{ fromJSON( steps.test-results.outputs.json ).formatted.stats.tests }} tests: ${{ fromJSON( steps.test-results.outputs.json ).conclusion }}'
+        color: ${{ env.BADGE_COLOR }}
+        path: StringResourceVisualizer.badge.svg
+
+    - name: Upload badge to Gist
+      # Upload only for pushes to main
+      if: ${{ steps.test-results.outcome == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+      uses: jpontdia/append-gist-action@master
+      with:
+        token: ${{ secrets.GIST_TOKEN }}
+        gistURL: https://gist.githubusercontent.com/mrlacey/c586ff0f495b4a8dd76ab0dbdf9c89e0
+        file: StringResourceVisualizer.badge.svg
