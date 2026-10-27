@@ -1,0 +1,28 @@
+<!--
+This file allows overriding of properties for all projects in the directory.
+See https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-by-directory?view=vs-2022#directorybuildprops-and-directorybuildtargets
+-->
+<Project>
+
+  <!--
+    Links .claude/skills to .github/skills so Claude Code discovers the repository skills.
+    Git cannot store a Windows junction, and a committed symlink only checks out as a real link
+    with core.symlinks=true plus Developer Mode, so the link is created locally and git-ignored.
+    A junction needs no elevation on Windows; elsewhere a relative symlink is used.
+    When several projects race to create it, the losers only get a warning.
+  -->
+  <PropertyGroup>
+    <_ClaudeSkillsLink>$(MSBuildThisFileDirectory).claude/skills</_ClaudeSkillsLink>
+    <_ClaudeSkillsTarget>$(MSBuildThisFileDirectory).github/skills</_ClaudeSkillsTarget>
+  </PropertyGroup>
+
+  <Target Name="ClaudeSkillsLink"
+          BeforeTargets="ResolveNuGetPackageAssets;BeforeCompile"
+          Condition="( '$(BuildingProject)' == 'false' OR '$(DesignTimeBuild)' == 'true' ) AND !Exists('$(_ClaudeSkillsLink)') AND Exists('$(_ClaudeSkillsTarget)')">
+    <Message Text="Linking .claude/skills to .github/skills..." Importance="High" />
+    <MakeDir Directories="$(MSBuildThisFileDirectory).claude" />
+    <Exec Condition="'$(OS)' == 'Windows_NT'" Command="mklink /J &quot;$([System.IO.Path]::GetFullPath('$(_ClaudeSkillsLink)'))&quot; &quot;$([System.IO.Path]::GetFullPath('$(_ClaudeSkillsTarget)'))&quot;" ContinueOnError="WarnAndContinue" />
+    <Exec Condition="'$(OS)' != 'Windows_NT'" Command="ln -s ../.github/skills &quot;$(_ClaudeSkillsLink)&quot;" ContinueOnError="WarnAndContinue" />
+  </Target>
+
+</Project>

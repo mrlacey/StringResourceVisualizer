@@ -328,3 +328,6 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Local junction to .github/skills, created by Directory.Build.targets
+/.claude/skills

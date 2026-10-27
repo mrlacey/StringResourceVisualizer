@@ -1,0 +1,36 @@
+name: "Copilot Setup Steps"
+
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
+    # The extension is a VSIX, which builds only with the MSBuild of Visual Studio, so the agent needs Windows.
+    # The extension targets Visual Studio 2022 and its CI build runs on `windows-2022`; `windows-latest` currently has Visual Studio 2026.
+    # The integrated firewall of the Copilot coding agent is not compatible with Windows, so the agent runs without it.
+    runs-on: windows-2022
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      contents: read
+
+    # You can define any steps you want, and they will run before the agent starts.
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Restore dependencies
+        run: msbuild StringResourceVisualizer.slnx /v:m /t:Restore /p:Configuration=Debug

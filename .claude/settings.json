@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "vs-agent-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "madskristensen/vs-agent-plugins"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "vs-extensibility-skills@vs-agent-plugins": true
+  }
+}

@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".mcp.json" />
+    <File Path="CHANGELOG.md" />
+    <File Path="Directory.Build.targets" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src/StringResourceVisualizer.csproj" Id="e71a6e00-d6f7-4401-9515-1dd72701ec57" />
+  <Project Path="src/StringResourceVisualizer.Tests/StringResourceVisualizer.Tests.csproj" Id="b36b6804-3de4-4c5b-9727-25f053cba7ac" />
+</Solution>
