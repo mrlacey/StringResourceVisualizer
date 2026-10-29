@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" ?>
 <Project>
 	<PropertyGroup>
-		<LangVersion>12.0</LangVersion>
+		<LangVersion>14.0</LangVersion>
 	</PropertyGroup>
 </Project>
