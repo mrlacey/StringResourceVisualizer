@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Target Name="AfterBuild" DependsOnTargets="CoreCompile" Condition="'$(SM_CERT_FP_SHA256)' != ''">
+  <!-- Runs after the build, which has created the VSIX container. It cannot be named AfterBuild: in an SDK-style project the SDK targets come after this file and replace that target. -->
+  <Target Name="SignAndCopyVsix" AfterTargets="Build" Condition="'$(SM_CERT_FP_SHA256)' != ''">
     <Message Text="Signing $(TargetVsixContainer)" Condition="'$(Configuration)' == 'Release'" Importance="High" />
     <Exec Command="sign code certificate-store -cfp $(SM_CERT_FP_SHA256) -csp &quot;DigiCert Software Trust Manager KSP&quot; -k $(SM_KP) -u &quot;http://timestamp.digicert.com&quot; -fl &quot;$(MSBuildProjectDirectory)\filestosign.txt&quot; $(MSBuildProjectDirectory)\$(TargetVsixContainer)" Condition="'$(Configuration)' == 'Release'" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
