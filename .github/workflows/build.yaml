@@ -26,13 +26,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup .NET build dependencies
-      uses: timheuer/bootstrap-dotnet@v2
-      with:
-        nuget: 'false'
-        sdk: 'false'
-        msbuild: 'true'
-
     - name: Increment VSIX version
       id: vsix_version
       uses: timheuer/vsix-version-stamp@v2
@@ -41,7 +34,7 @@ jobs:
         vsix-token-source-file: ${{ env.VsixManifestSourcePath }}
 
     - name: Build
-      run: msbuild /v:m -restore /p:OutDir=\_built
+      run: dotnet build ./StringResourceVisualizer.slnx --configuration ${{ env.Configuration }} -p:OutDir=\_built -v:m
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
